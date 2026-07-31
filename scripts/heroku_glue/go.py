@@ -11,7 +11,7 @@ REQUIRED_TOOLS = [
 ]
 DEFAULT_ADDONS: list[str] = []
 
-GO_VERSION = "1.22"
+GO_VERSION = "1.24"
 
 _MAIN_GO = """\
 package main

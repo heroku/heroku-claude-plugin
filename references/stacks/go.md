@@ -6,7 +6,7 @@
 
 Last 2 major versions of Go. Set version in `go.mod`:
 ```
-go 1.22
+go 1.24
 ```
 
 Or via `GOVERSION` environment variable. Version spec like `go1.22` expands to the latest `1.22.x` release.
@@ -48,7 +48,7 @@ Auto-detected from `go.mod`. Explicit: `heroku/go`
 ```
 module github.com/user/myapp
 
-go 1.22
+go 1.24
 ```
 
 ## Default Addons
