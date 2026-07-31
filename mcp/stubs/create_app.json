@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"app_name\": \"supplychef-preview-8391\", \"git_url\": \"https://git.heroku.com/supplychef-preview-8391.git\", \"session_id\": \"anon-sess-abc123\", \"public_routing\": false, \"expires_at\": \"2026-07-30T16:02:00Z\"}"
+    }
+  ],
+  "isError": false
+}

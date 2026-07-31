@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# UserPromptSubmit hook — detects build/deploy intent and runs a quick preflight check.
+# Fast path only: checks git + docker presence, skips reference staleness.
+# Must complete in < 5 seconds.
+
+set -euo pipefail
+
+PAYLOAD=$(cat)
+PROMPT=$(printf '%s' "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('user_prompt',''))" 2>/dev/null || true)
+
+# Keyword detection — match build/deploy intent
+if ! printf '%s' "$PROMPT" | grep -qiE '(build|scaffold|deploy|create app|heroku|new app)'; then
+  echo '{}'
+  exit 0
+fi
+
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+
+# Quick preflight: git + heroku + docker existence only
+# TODO: remove heroku check once MCP implementation is available
+MISSING=()
+
+if ! command -v git &>/dev/null; then
+  MISSING+=("git")
+fi
+
+if ! command -v heroku &>/dev/null; then
+  MISSING+=("heroku CLI")
+elif ! timeout 3 heroku whoami &>/dev/null 2>&1; then
+  MISSING+=("heroku login (run: heroku login)")
+fi
+
+if ! command -v docker &>/dev/null; then
+  MISSING+=("docker (optional — enables local dev environment)")
+fi
+
+if [ ${#MISSING[@]} -eq 0 ]; then
+  echo '{}'
+  exit 0
+fi
+
+MSG="Heroku plugin preflight:"
+for item in "${MISSING[@]}"; do
+  MSG="$MSG $item not found."
+done
+
+printf '{"systemMessage": "%s"}\n' "$MSG"
+exit 0

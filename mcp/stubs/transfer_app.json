@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\": \"transferred\", \"app_name\": \"supplychef-app\", \"permanent_url\": \"https://supplychef-app.herokuapp.com\", \"owner\": \"sally@example.com\", \"addons_provisioned\": [\"heroku-postgresql\", \"heroku-redis\"], \"public_routing\": false}"
+    }
+  ],
+  "isError": false
+}

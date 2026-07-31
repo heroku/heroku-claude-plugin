@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  generator-evals:
+    name: Generator Evals (Layer 2 Determinism)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run generator evals
+        run: python3 -m unittest discover -s evals/generator -v
+
+  container-evals:
+    name: Container Evals (Docker Boot Tests)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: eval_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run container evals
+        run: python3 -m unittest discover -s evals/container -v
+        timeout-minutes: 15
+
+  skill-evals:
+    name: Skill Evals (LLM Trigger + E2E)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    env:
+      HEROKU_MCP_STUB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run trigger evals
+        run: python3 evals/skills/trigger_eval.py
+      - name: Run E2E eval stub mode Python FastAPI
+        run: python3 evals/skills/e2e_build_and_deploy.py --stack python
+      - name: Run E2E eval stub mode Node
+        run: python3 evals/skills/e2e_build_and_deploy.py --stack node
+      - name: Run E2E eval stub mode Go
+        run: python3 evals/skills/e2e_build_and_deploy.py --stack go

@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"build_id\": \"build-abc-123\", \"status\": \"succeeded\", \"app_name\": \"supplychef-preview-8391\", \"app_url\": \"https://supplychef-preview-8391.herokuapp.com\", \"logs\": [\"-----> Python app detected\", \"-----> Installing python-3.12.0\", \"-----> Installing pip 23.3.1\", \"-----> Installing requirements with pip\", \"-----> Discovering process types\", \"       Procfile declares types -> web\", \"-----> Compressing...\", \"-----> Launch!\", \"       Released v1\", \"       https://supplychef-preview-8391.herokuapp.com deployed to Heroku\"]}"
+    }
+  ],
+  "isError": false
+}

@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"app_name\": \"supplychef-app\", \"public_routing\": true, \"url\": \"https://supplychef-app.herokuapp.com\", \"status\": \"ok\"}"
+    }
+  ],
+  "isError": false
+}

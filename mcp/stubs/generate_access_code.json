@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"code\": \"84729\", \"claim_url\": \"https://claim.heroku.com/anon-sess-abc123\", \"app_url\": \"https://supplychef-preview-8391.herokuapp.com\", \"remaining_codes\": 4, \"expires_at\": \"2026-07-30T16:02:00Z\"}"
+    }
+  ],
+  "isError": false
+}
