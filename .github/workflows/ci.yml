@@ -10,7 +10,7 @@ on:
 jobs:
   generator-evals:
     name: Generator Evals (Layer 2 Determinism)
-    runs-on: ubuntu-latest
+    runs-on: pub-hk-ubuntu-24.04-ip
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,7 +21,7 @@ jobs:
 
   container-evals:
     name: Container Evals (Docker Boot Tests)
-    runs-on: ubuntu-latest
+    runs-on: pub-hk-ubuntu-24.04-ip
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     services:
       postgres:
@@ -53,7 +53,7 @@ jobs:
 
   skill-evals:
     name: Skill Evals (LLM Trigger + E2E)
-    runs-on: ubuntu-latest
+    runs-on: pub-hk-ubuntu-24.04-ip
     if: github.event_name == 'workflow_dispatch'
     env:
       HEROKU_MCP_STUB: "1"
