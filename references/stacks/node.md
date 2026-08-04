@@ -78,6 +78,7 @@ For this plugin, the recommended pattern is a separate `package.json` build scri
 - `npm start` is the default Procfile command; if not defined, build fails
 - Postgres TLS: `pg` module defaults to `ssl: false` on Heroku Postgres; set `ssl: { rejectUnauthorized: false }` or use `DATABASE_URL` with `?ssl=true`
 - Use `process.env.PORT` for the HTTP listener — never hardcode
+- **`devDependencies` are pruned by default**: Heroku sets `NODE_ENV=production`, which causes `npm install` to skip devDependencies. Build tools like Vite, Vue CLI, and TypeScript compiler will not be installed. Fix: `heroku config:set NPM_CONFIG_PRODUCTION=false` before the first push. This only affects the build container, not runtime.
 
 ## Best Practices
 

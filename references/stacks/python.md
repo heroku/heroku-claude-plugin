@@ -6,7 +6,7 @@
 
 | Version | Status |
 |---------|--------|
-| 3.14 | Default |
+| 3.14 | Default (Heroku) |
 | 3.13 | Supported |
 | 3.12 | Supported |
 | 3.11 | Supported |
@@ -16,6 +16,23 @@ Specify version in `.python-version` (recommended) or legacy `runtime.txt`:
 ```
 python-3.12.0
 ```
+
+**Local venv gotcha — Python 3.14:** pydantic-core (used by FastAPI) requires Python ≤ 3.13 due
+to pyo3 limitations. If `python3` on the user's machine resolves to 3.14 (e.g. homebrew default),
+`pip install` will fail building pydantic-core wheels. Before creating the local venv, check:
+
+```bash
+python3 --version
+```
+
+If 3.14+, use the 3.13 binary explicitly:
+```bash
+brew install python@3.13   # if not already installed
+/opt/homebrew/opt/python@3.13/bin/python3.13 -m venv .venv
+```
+
+The `.python-version` file scaffolded by this plugin pins 3.12 — correct for Heroku — but does
+not affect which binary is used for local venv creation.
 
 ## Required Files
 
