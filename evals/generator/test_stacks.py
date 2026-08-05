@@ -234,5 +234,111 @@ class AddonValidationEval(ScaffoldEvalCase):
         self.assertEqual(addons, sorted(addons), "app.json addons not sorted")
 
 
+# ---------------------------------------------------------------------------
+# Python — Django
+# ---------------------------------------------------------------------------
+
+@unittest.skipUnless(shutil.which("django-admin"), "django-admin not installed")
+class PythonDjangoEval(ScaffoldEvalCase):
+    STACK = "python"
+    VARIANT = "django"
+
+    def test_contract(self) -> None:
+        target, summary = self.scaffold("hello-django")
+        # requirements.txt must exist and contain django + gunicorn
+        reqs_path = target / "requirements.txt"
+        self.assertTrue(reqs_path.exists(), "requirements.txt missing")
+        reqs = reqs_path.read_text(encoding="utf-8")
+        self.assertIn("django", reqs.lower())
+        self.assertIn("gunicorn", reqs)
+        # Procfile web: gunicorn config.wsgi, $PORT
+        self.assert_procfile_web(target, "gunicorn config.wsgi")
+        self.assert_procfile_web(target, "$PORT")
+        # Procfile release: python manage.py migrate
+        self.assert_procfile_release(target, "python manage.py migrate")
+        # app.json buildpack
+        self.assert_app_json_buildpack(target, "heroku/python")
+        # app.json addons — Django default includes postgres
+        self.assert_app_json_addons(target, ["heroku-postgresql"])
+        # app.json env must include DJANGO_SECRET_KEY and DJANGO_DEBUG
+        data = json.loads((target / "app.json").read_text(encoding="utf-8"))
+        env = data.get("env", {})
+        self.assertIn("DJANGO_SECRET_KEY", env)
+        self.assertIn("DJANGO_DEBUG", env)
+        # .python-version must exist
+        self.assertTrue((target / ".python-version").exists(), ".python-version missing")
+
+    def test_contract_with_redis(self) -> None:
+        target, _ = self.scaffold("django-redis", addons="redis")
+        self.assert_app_json_addons(target, ["heroku-postgresql", "heroku-redis"])
+        reqs = (target / "requirements.txt").read_text(encoding="utf-8")
+        self.assertIn("redis", reqs)
+
+    def test_determinism(self) -> None:
+        self.assert_layer2_deterministic("det-django")
+
+    def test_linting_config(self) -> None:
+        target, _ = self.scaffold("django-lint")
+        self.assertTrue(
+            (target / ".pre-commit-config.yaml").exists(),
+            ".pre-commit-config.yaml missing",
+        )
+        precommit = (target / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+        self.assertIn("ruff", precommit)
+        self.assertTrue((target / "pyproject.toml").exists(), "pyproject.toml missing")
+
+    def test_lf_newlines(self) -> None:
+        target, _ = self.scaffold("django-lf")
+        for fname in ["Procfile", "app.json", "requirements.txt", ".python-version"]:
+            self.assert_lf_only(target / fname)
+            self.assert_trailing_newline(target / fname)
+
+
+# ---------------------------------------------------------------------------
+# Ruby on Rails
+# ---------------------------------------------------------------------------
+
+@unittest.skipUnless(shutil.which("rails"), "rails not installed")
+class RailsStackEval(ScaffoldEvalCase):
+    STACK = "rails"
+
+    def test_contract(self) -> None:
+        target, summary = self.scaffold("hello-rails")
+        # Procfile web: bundle exec puma, PORT env var referenced
+        self.assert_procfile_web(target, "bundle exec puma")
+        self.assert_procfile_web(target, "PORT")
+        # Procfile release: bundle exec rails db:migrate
+        self.assert_procfile_release(target, "bundle exec rails db:migrate")
+        # app.json buildpack
+        self.assert_app_json_buildpack(target, "heroku/ruby")
+        # app.json addons — Rails default includes postgres
+        self.assert_app_json_addons(target, ["heroku-postgresql"])
+        # app.json env
+        data = json.loads((target / "app.json").read_text(encoding="utf-8"))
+        env = data.get("env", {})
+        self.assertIn("RAILS_MASTER_KEY", env)
+        self.assertIn("RAILS_LOG_TO_STDOUT", env)
+        self.assertIn("RAILS_SERVE_STATIC_FILES", env)
+        # Linting config files
+        self.assertTrue((target / ".rubocop.yml").exists(), ".rubocop.yml missing")
+        self.assertTrue(
+            (target / ".pre-commit-config.yaml").exists(),
+            ".pre-commit-config.yaml missing",
+        )
+
+    def test_contract_with_redis(self) -> None:
+        target, _ = self.scaffold("rails-redis", addons="redis")
+        self.assert_app_json_addons(target, ["heroku-postgresql", "heroku-redis"])
+
+    def test_determinism(self) -> None:
+        self.assert_layer2_deterministic("det-rails")
+
+    def test_lf_newlines(self) -> None:
+        target, _ = self.scaffold("rails-lf")
+        for fname in ["Procfile", "app.json"]:
+            self.assert_lf_only(target / fname)
+            self.assert_trailing_newline(target / fname)
+
+
 if __name__ == "__main__":
     unittest.main()
