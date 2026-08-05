@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Reference file staleness checker.
-
 Reads plugin.json for policy.reference_staleness_days.
 Parses <!-- Source: <URL> — verified <DATE> --> from each reference file.
 For files older than N days: fetches source URL and updates content + date stamp.
@@ -12,6 +11,8 @@ Usage:
   python3 scripts/check_references.py --auto    # non-interactive (auto-update)
   python3 scripts/check_references.py --dry-run # report staleness only
 """
+
+from __future__ import annotations
 
 import argparse
 import json
