@@ -15,6 +15,13 @@ import argparse
 import json
 import sys
 
+# TODO(token-budget-eval): Add a token budget eval entry for check-deploy-status
+# (and for the diagnose-and-fix sub-agent Task call in Step 4b) once the token
+# budget eval infrastructure from W-23664929 lands in evals/skills/token_budget_eval.py.
+# The diagnose-and-fix prompt template carries ~200 tokens of system context
+# (deploy-contract.md reference + stack reference) plus a variable log excerpt;
+# budget should reflect worst-case 100-line log tail.
+
 SKILL_TRIGGERS: dict[str, dict] = {
     "preflight": {
         "positive": [
@@ -63,6 +70,9 @@ SKILL_TRIGGERS: dict[str, dict] = {
             "Check the build",
             "What happened to my deploy?",
             "How is the deployment going?",
+            # diagnose/fix loop angle — exercises Step 4b Task delegation path
+            "My Heroku build failed, can you fix it?",
+            "The deploy crashed, diagnose what went wrong",
         ],
         "negative": [
             "Deploy my app",
