@@ -22,6 +22,16 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 SCAFFOLD = REPO_ROOT / "scripts" / "scaffold.py"
 STUBS_DIR = REPO_ROOT / "mcp" / "stubs"
 
+# Expected .gitignore marker per stack — confirms merge_gitignore() ran for that stack.
+# git init runs in the Claude skill context (scaffold-app Step 7), not in scaffold.py —
+# verified by skill eval, not this script.
+STACK_GITIGNORE_MARKERS: dict[str, str] = {
+    "python": "__pycache__/",
+    "node": "node_modules/",
+    "go": "bin/",
+    "rails": "log/",
+}
+
 
 def _read_stub(name: str) -> dict:
     stub_path = STUBS_DIR / name
@@ -62,6 +72,19 @@ def run_e2e(stack: str = "python", variant: str = "fastapi", keep: bool = False)
                 print(f"  ✗ Missing: {fname}")
                 return 1
             print(f"  ✓ {fname}")
+
+        # Step 2b: Verify .gitignore content
+        print("\n[2b] Verifying .gitignore content...")
+        marker = STACK_GITIGNORE_MARKERS.get(stack)
+        if marker:
+            gitignore_text = (target / ".gitignore").read_text(encoding="utf-8")
+            if marker in gitignore_text:
+                print(f"  ✓ .gitignore contains '{marker}'")
+            else:
+                print(f"  ✗ .gitignore missing '{marker}'")
+                return 1
+        else:
+            print(f"  (no marker defined for stack '{stack}', skipping content check)")
 
         # Step 3: Stub — create anonymous app
         print("\n[3] Create anonymous app (stub)...")
