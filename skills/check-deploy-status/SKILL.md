@@ -4,6 +4,8 @@ description: >-
   Check Heroku deployment status and verify the app is running. Use after
   deploying to Heroku, or when the user asks "is my app deployed?", "check
   the build", "what happened to my deploy?", "are there any errors?", or similar.
+  On failure, delegates diagnosis and repair to the `diagnose-and-fix` sub-agent
+  (explicit Task delegation — LLM role is interpreting novel log text).
 argument-hint: "[app-name]"
 allowed-tools: Bash, Read, Task
 ---
@@ -76,19 +78,48 @@ Open in browser: heroku open --app <app-name>
 
 ## Step 4b — Deployment failed (self-heal loop, max 3 attempts)
 
-### Diagnose
-Map the log pattern to a fix using the error table above.
+<!-- Why a sub-agent call here: the LLM's irreducible role is interpreting novel
+     log text to determine root cause and apply a targeted fix. Making the
+     delegation explicit (rather than embedding it in prose) improves
+     testability — the Task boundary can be exercised in isolation — and
+     reliability, because the sub-agent receives focused context with a
+     structured return contract. -->
 
-### Fix
-Apply the fix, show the user what you changed:
-```bash
-cd <target_dir>
-# ... edit file(s) ...
-git commit -am "fix: resolve deploy failure — <diagnosis>"
-git push heroku main
-```
+Initialize `attempt = 1`. While `attempt <= 3`:
 
-Re-run from Step 2. Increment attempt counter. After 3 failed attempts:
+1. Collect the relevant log excerpt (last 50–100 lines from Step 3).
+
+2. Call the `diagnose-and-fix` sub-agent:
+
+   ```
+   Task(
+     subagent_type: "diagnose-and-fix",
+     description: "Diagnose and fix Heroku deploy failure",
+     prompt: "Diagnose the following Heroku deploy failure and apply a fix.
+              App: '<app-name>' at '<target_dir>'. Stack: '<stack>'.
+              Log excerpt:
+              <log lines>
+
+              Reference ${CLAUDE_PLUGIN_ROOT}/references/heroku/deploy-contract.md
+              for known error patterns.
+              Reference ${CLAUDE_PLUGIN_ROOT}/references/stacks/<stack>.md
+              for stack-specific gotchas.
+
+              Apply the fix, commit with message 'fix: <diagnosis>', and return:
+              { \"fixed\": true|false, \"diagnosis\": \"...\", \"fix_applied\": \"...\" }"
+   )
+   ```
+
+3. If `result.fixed == true`:
+   ```bash
+   cd <target_dir>
+   git push heroku main
+   ```
+   Re-run from Step 2. Increment `attempt`.
+
+4. If `result.fixed == false`: increment `attempt` and loop.
+
+After 3 failed attempts (or if the sub-agent cannot fix):
 
 ```
 ✗ Deployment failed after 3 attempts.
