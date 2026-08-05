@@ -1,7 +1,7 @@
 # Heroku Plugin Build Standards
 
 These rules apply to every build session without exception. They are not optional steps —
-they are the contract between Bob and the user.
+they are the contract between Claude and the user.
 
 ---
 
@@ -18,7 +18,7 @@ Before writing code, present a concrete implementation plan and get explicit use
 - List what is explicitly NOT included (e.g. "no authentication", "no admin panel")
 - Do not add functionality that was not confirmed — not authentication, not email, not logging pipelines, not anything beyond what the user approved
 - If you think something is needed (e.g. seed data, health endpoint), ask — do not assume
-- The user's confirmation is the contract. Build exactly that, nothing more.
+- The user's confirmation is the contract. Build exactly that, nothing more./
 
 **ALWAYS read the stack reference and coding standards before writing code.**
 Before writing a single line:
