@@ -51,10 +51,60 @@ Creating ⬢ <app-name>... done
 https://<app-name>.herokuapp.com/ | https://git.heroku.com/<app-name>.git
 ```
 
-## Step 5 — Provision addons
+## Step 5 — Apply app.json configuration
 
-Read `app.json` to determine which addons are declared. For each addon in the
-`addons` array, provision it:
+`heroku create --no-remote` does **not** process `app.json` — generators, buildpacks, and env
+entries are only applied during Heroku Button / `heroku create --manifest` deploys. Apply them
+manually in this order:
+
+### 5a — Set env vars from generators
+
+Read `app.json` and look for env entries with `"generator": "secret"`. For each one, generate
+and set the value before pushing:
+
+```bash
+# For each env var with "generator": "secret" in app.json:
+heroku config:set <KEY>=$(python3 -c 'import secrets; print(secrets.token_hex(32))') --app <app-name>
+```
+
+Common examples: `DJANGO_SECRET_KEY`, `SECRET_KEY_BASE` (Rails), `SECRET_KEY` (Flask).
+
+### 5b — Apply buildpacks
+
+Read `app.json` and look for the `buildpacks` array. Apply each in order:
+
+```bash
+# For each buildpack in app.json buildpacks array (in order):
+heroku buildpacks:add --index <N> <url> --app <app-name>
+```
+
+Example — Node.js app:
+```bash
+heroku buildpacks:add --index 1 heroku/nodejs --app <app-name>
+```
+
+Example — Vue.js + Python (multi-buildpack):
+```bash
+heroku buildpacks:add --index 1 heroku/nodejs --app <app-name>
+heroku buildpacks:add --index 2 heroku/python --app <app-name>
+```
+
+If `app.json` has no `buildpacks` array, Heroku will auto-detect. Skip this step.
+
+**For any app that includes a Node.js build step** (Vue, React, or any frontend that runs `npm run build`):
+set `NPM_CONFIG_PRODUCTION=false` before pushing. Heroku sets `NODE_ENV=production` by default,
+which causes `npm install` to skip `devDependencies` — Vite, Vue CLI, and other build tools are
+devDependencies and will not be installed, breaking the build.
+
+```bash
+heroku config:set NPM_CONFIG_PRODUCTION=false --app <app-name>
+```
+
+This is safe — it only affects the build phase, not the runtime.
+
+### 5c — Provision addons
+
+For each addon in the `addons` array, provision it:
 
 ```bash
 # heroku-postgresql
