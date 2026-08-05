@@ -330,10 +330,11 @@ def _token_count(text: str) -> int:
 
 
 def load_budgets(plugin_json_path: str) -> dict[str, int]:
-    """Load token budgets from plugin.json."""
+    """Load token budgets from plugin.json, skipping metadata keys prefixed with _."""
     with open(plugin_json_path) as f:
         config = json.load(f)
-    return config["policy"]["token_budgets"]
+    raw = config["policy"]["token_budgets"]
+    return {k: v for k, v in raw.items() if not k.startswith("_")}
 
 
 def run_eval(skill: str | None = None) -> int:
