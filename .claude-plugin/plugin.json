@@ -14,6 +14,7 @@
     "supported_stacks": ["node", "python", "rails", "go"],
     "supported_addons": ["heroku-postgresql", "heroku-redis"],
     "unsupported_addons": ["kafka"],
+    "token_budget_tracking": false,
     "token_budgets": {
       "_description": "Starting estimates — not measured from real Claude invocations. To calibrate: run real skill prompts through Claude, capture actual output token counts, and update these values with headroom. Re-measure when skills change significantly.",
       "preflight": 300,

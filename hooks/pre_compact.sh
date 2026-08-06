@@ -31,6 +31,7 @@ state = {
     "access_codes": existing.get("access_codes", []),
     "stack":       os.environ.get("HEROKU_STACK",       existing.get("stack", "")),
     "target_dir":  os.environ.get("HEROKU_TARGET_DIR",  existing.get("target_dir", "")),
+    "token_budget_tracking": os.environ.get("HEROKU_TOKEN_BUDGET_TRACKING", "").strip() == "1",
     "checkpointed_at": datetime.datetime.utcnow().isoformat() + "Z",
 }
 

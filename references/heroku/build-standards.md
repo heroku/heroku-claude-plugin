@@ -40,6 +40,17 @@ For each feature:
 
 Never write implementation code without a corresponding test.
 
+**ALWAYS record token usage at the end of every skill response.**
+If `HEROKU_TOKEN_BUDGET_TRACKING=1` is set in the environment, run the following as the
+final step of every skill, substituting the actual skill name and your estimated output
+token count:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/token_usage.py record --skill <skill-name> --tokens <estimated-count>
+```
+The script will print a utilization line to the user and log the record to
+`.heroku-plugin-token-usage.jsonl`. If the env var is not set, the script is a silent
+no-op — always safe to call.
+
 **ALWAYS run the pre-commit checklist before committing.**
 See `references/heroku/pre-commit-checklist.md`. Every item must pass.
 Tests must pass at 90%+ coverage. No lint errors. No security warnings.

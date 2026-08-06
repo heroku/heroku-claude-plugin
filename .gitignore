@@ -6,6 +6,7 @@ __pycache__/
 *.swo
 evals/.tmp/
 .heroku-plugin-session.json
+.heroku-plugin-token-usage.jsonl
 mcp/references/
 .coverage
 .pytest_cache/
