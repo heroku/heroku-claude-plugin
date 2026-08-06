@@ -1,7 +1,7 @@
 export const meta = {
   name: "scenario-eval",
   description: "Fan out one agent per scenario, execute full build-and-deploy, collect structured results",
-  whenToUse: "Run from a session launched with: HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin --allowedTools \"Bash,Read,Write,Edit\". Each scenario deploys a real Heroku app and runs teardown. Requires an authenticated Heroku account and moot-server running.",
+  whenToUse: "Run from a session launched with: HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin --allowedTools \"Bash,Read,Write,Edit,Task\". Each scenario deploys a real Heroku app and runs teardown. Requires an authenticated Heroku account and moot-server running.",
   phases: [
     { title: "Load", detail: "Read scenarios.json and skill files" },
     { title: "Execute", detail: "Fan out one agent per scenario in worktree isolation" },
