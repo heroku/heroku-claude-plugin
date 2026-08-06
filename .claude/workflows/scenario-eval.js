@@ -24,17 +24,19 @@ const corpus = await agent(
   `skills/deploy-anonymous/SKILL.md, ` +
   `skills/check-deploy-status/SKILL.md, ` +
   `skills/teardown/SKILL.md, ` +
-  `references/heroku/build-standards.md. ` +
-  `Return a JSON object with keys: scenarios (array), skills (object keyed by skill name), buildStandards (string).`,
+  `references/heroku/build-standards.md, ` +
+  `evals/scenarios/report-template.md. ` +
+  `Return a JSON object with keys: scenarios (array), skills (object keyed by skill name), buildStandards (string), reportTemplate (string).`,
   {
     label: "load-corpus",
     schema: {
       type: "object",
-      required: ["scenarios", "skills", "buildStandards"],
+      required: ["scenarios", "skills", "buildStandards", "reportTemplate"],
       properties: {
         scenarios: { type: "array" },
         skills: { type: "object" },
         buildStandards: { type: "string" },
+        reportTemplate: { type: "string" },
       },
     },
   }
@@ -101,6 +103,7 @@ const results = await parallel(
     const statusContent = corpus.skills["check-deploy-status"] || "";
     const teardownContent = corpus.skills["teardown"] || "";
     const standards = corpus.buildStandards || "";
+    const reportTemplate = corpus.reportTemplate || "";
 
     const prompt = `
 You are a Claude Code agent executing a plugin scenario eval. You are NOT Bob — do not load any
@@ -142,6 +145,10 @@ ${statusContent}
 
 ### teardown
 ${teardownContent}
+
+## Report template (use exactly this format when saving moot memories at teardown)
+
+${reportTemplate}
 
 ## Execution instructions
 
