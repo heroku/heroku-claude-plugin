@@ -8,7 +8,6 @@
     "addons": ["heroku-postgresql"],
     "assertions": [
       "Skill confirms requirements and presents implementation plan before writing code",
-      "Scope clarification: Vue.js mentioned — agent surfaces single-stack Node.js recommendation",
       "Procfile exists with 'web: node' command",
       "app.json exists and includes heroku-postgresql addon",
       "package.json exists with a start script",
