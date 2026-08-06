@@ -34,6 +34,8 @@ Assertions (<N passed> / <total>):
 ✅ Teardown completes and session saved to moot
 
 Token usage: <skill>: <N> tokens / <budget> budget (<pct>%)
+Subagent usage: subagent_tokens=<N> tool_uses=<N> duration_ms=<N>
+  (scan ALL subagent and skill responses for these fields before writing — treat as required)
 
 Step-by-step:
 1. preflight — <summary of what happened>

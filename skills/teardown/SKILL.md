@@ -73,6 +73,11 @@ Before surfacing the final result, save two memories using `moot memory create`:
 **Memory 1 — Run steps** (`--kind context --scope user`)
 - Title: `heroku-plugin build-and-deploy: session run steps (<date>)`
 - Content: date, app name, stack, result (SUCCESS/FAILED), each numbered step with what was called and what happened, any deviations from the expected skill chain, notable issues with memory IDs if applicable, approximate timing
+- **Required fields — scan ALL subagent and skill responses before writing:**
+  - `token_usage`: output from `token_usage.py record` if `HEROKU_TOKEN_BUDGET_TRACKING=1` was set
+  - `subagent_tokens`: total tokens used by any Task() sub-agents
+  - `tool_uses`: total tool calls across the session
+  - `duration_ms`: total wall-clock time if reported by any subagent
 - Keywords: `heroku build-and-deploy <stack> <addons>`
 
 **Memory 2 — Issues/fixes** (`--kind learning --scope user`) — one per distinct issue
