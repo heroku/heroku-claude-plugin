@@ -12,8 +12,8 @@ jobs:
     name: Unit Tests (90% coverage)
     runs-on: pub-hk-ubuntu-24.04-ip
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install dev dependencies
@@ -26,8 +26,8 @@ jobs:
     name: Generator Evals (Layer 2 Determinism)
     runs-on: pub-hk-ubuntu-24.04-ip
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Run generator evals
@@ -57,8 +57,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Run container evals
@@ -72,12 +72,14 @@ jobs:
     env:
       HEROKU_MCP_STUB: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Run trigger evals
         run: python3 evals/skills/trigger_eval.py
+      - name: Run token budget evals
+        run: python3 evals/skills/token_budget_eval.py
       - name: Run E2E eval stub mode Python FastAPI
         run: python3 evals/skills/e2e_build_and_deploy.py --stack python
       - name: Run E2E eval stub mode Node
