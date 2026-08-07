@@ -16,16 +16,18 @@ phase("Load");
 
 const scenarioFilter = args && args.scenario ? args.scenario : null;
 
+const PLUGIN_DIR = "/Users/jwinn/src/heroku-plugin";
+
 const corpus = await agent(
-  `Read the file at evals/scenarios/scenarios.json and return its full contents as a JSON array. ` +
+  `Read the file at ${PLUGIN_DIR}/evals/scenarios/scenarios.json and return its full contents as a JSON array. ` +
   `Also read these skill files and return their contents: ` +
-  `skills/build-and-deploy/SKILL.md, ` +
-  `skills/scaffold-app/SKILL.md, ` +
-  `skills/deploy-anonymous/SKILL.md, ` +
-  `skills/check-deploy-status/SKILL.md, ` +
-  `skills/teardown/SKILL.md, ` +
-  `references/heroku/build-standards.md, ` +
-  `evals/scenarios/report-template.md. ` +
+  `${PLUGIN_DIR}/skills/build-and-deploy/SKILL.md, ` +
+  `${PLUGIN_DIR}/skills/scaffold-app/SKILL.md, ` +
+  `${PLUGIN_DIR}/skills/deploy-anonymous/SKILL.md, ` +
+  `${PLUGIN_DIR}/skills/check-deploy-status/SKILL.md, ` +
+  `${PLUGIN_DIR}/skills/teardown/SKILL.md, ` +
+  `${PLUGIN_DIR}/references/heroku/build-standards.md, ` +
+  `${PLUGIN_DIR}/evals/scenarios/report-template.md. ` +
   `Return a JSON object with keys: scenarios (array), skills (object keyed by skill name), buildStandards (string), reportTemplate (string).`,
   {
     label: "load-corpus",
@@ -170,7 +172,6 @@ ${reportTemplate}
     return agent(prompt, {
       label: `scenario:${scenario.id}`,
       phase: "Execute",
-      isolation: "worktree",
       schema: RESULT_SCHEMA,
     });
   })
