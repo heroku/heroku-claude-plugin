@@ -154,17 +154,21 @@ ${reportTemplate}
 
 ## Execution instructions
 
-1. Execute the build-and-deploy skill for the scenario prompt above. Follow the skill
+1. Scaffold into `/tmp/scenario-${scenario.id}` — create this directory first if it doesn't
+   exist. All file writes, git init, and Heroku operations happen inside this directory.
+   This keeps parallel scenario runs fully isolated from each other and from the plugin repo.
+
+2. Execute the build-and-deploy skill for the scenario prompt above. Follow the skill
    instructions exactly. Confirm requirements internally (no user to ask — use the scenario
    prompt as the full specification). Select the stack and variant from the scenario metadata.
 
-2. After the skill completes (success or failure), evaluate each assertion as passed or failed
+3. After the skill completes (success or failure), evaluate each assertion as passed or failed
    based on what actually happened. Be honest — if a step was skipped or failed, mark it failed.
 
-3. Run the teardown skill to destroy the Heroku app and save the session record to moot.
+4. Run the teardown skill to destroy the Heroku app and save the session record to moot.
    If moot is unavailable, note it and continue.
 
-4. Return the structured result. Include the app name, app URL (empty string if deploy failed),
+5. Return the structured result. Include the app name, app URL (empty string if deploy failed),
    whether deploy and teardown succeeded, whether moot saved, an estimated output token count
    for the full build-and-deploy skill execution, and any notes about deviations or issues.
 `;
@@ -173,6 +177,8 @@ ${reportTemplate}
       label: `scenario:${scenario.id}`,
       phase: "Execute",
       schema: RESULT_SCHEMA,
+      // No worktree isolation — agents scaffold into unique /tmp dirs per scenario,
+      // so there is no filesystem collision between parallel runs.
     });
   })
 );
