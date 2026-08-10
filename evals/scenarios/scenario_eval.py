@@ -86,12 +86,12 @@ def cmd_run(scenario_id: str | None) -> int:
         print(f"Launching workflow for scenario: {scenario_id}")
         print()
         print("In Claude Code, run:")
-        print(f'  /workflow scenario-eval {{"scenario": "{scenario_id}"}}')
+        print(f'  /scenario-eval {{"scenario": "{scenario_id}"}}')
     else:
         print("Launching workflow for all scenarios (max 5 concurrent).")
         print()
         print("In Claude Code, run:")
-        print("  /workflow scenario-eval")
+        print("  /scenario-eval")
     print()
     return 0
 
