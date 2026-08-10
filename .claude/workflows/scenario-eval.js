@@ -154,7 +154,7 @@ ${reportTemplate}
 
 ## Execution instructions
 
-1. Scaffold into `/tmp/scenario-${scenario.id}` — create this directory first if it doesn't
+1. Scaffold into \`/tmp/scenario-${scenario.id}\` — create this directory first if it doesn't
    exist. All file writes, git init, and Heroku operations happen inside this directory.
    This keeps parallel scenario runs fully isolated from each other and from the plugin repo.
 
