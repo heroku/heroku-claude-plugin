@@ -154,9 +154,10 @@ ${reportTemplate}
 
 ## Execution instructions
 
-1. Scaffold into \`/tmp/scenario-${scenario.id}\` — create this directory first if it doesn't
-   exist. All file writes, git init, and Heroku operations happen inside this directory.
-   This keeps parallel scenario runs fully isolated from each other and from the plugin repo.
+1. Generate a unique 8-character hex run ID: run \`openssl rand -hex 4\` and capture the output.
+   Scaffold into \`/tmp/scenario-${scenario.id}-<run-id>\` where <run-id> is the hex string.
+   Create this directory first. All file writes, git init, and Heroku operations happen inside
+   this directory. The unique suffix prevents collisions with leftover directories from prior runs.
 
 2. Execute the build-and-deploy skill for the scenario prompt above. Follow the skill
    instructions exactly. Confirm requirements internally (no user to ask — use the scenario
@@ -168,7 +169,10 @@ ${reportTemplate}
 4. Run the teardown skill to destroy the Heroku app and save the session record to moot.
    If moot is unavailable, note it and continue.
 
-5. Return the structured result. Include the app name, app URL (empty string if deploy failed),
+5. Delete the scaffold directory: \`rm -rf /tmp/scenario-${scenario.id}-<run-id>\`.
+   Do this regardless of whether the scenario succeeded or failed.
+
+6. Return the structured result. Include the app name, app URL (empty string if deploy failed),
    whether deploy and teardown succeeded, whether moot saved, an estimated output token count
    for the full build-and-deploy skill execution, and any notes about deviations or issues.
 `;

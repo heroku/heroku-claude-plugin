@@ -134,6 +134,7 @@ Key rules:
 - No dynamic SQL — always use ActiveRecord query methods or parameterized queries
 - Set `force_ssl = true` in `config/environments/production.rb`
 - `SECRET_KEY_BASE` and `RAILS_MASTER_KEY` via Heroku config vars only
+- **Rails version:** Brakeman reports EOL Rails versions as High confidence warnings — always use the latest stable Rails (`gem "rails"` with no version pin, or `gem "rails", "~> 8.1"`) so `bundle install` pulls the current release. Never pin to a specific patch version in the Gemfile.
 
 ### Testing
 
