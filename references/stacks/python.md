@@ -95,6 +95,30 @@ Auto-detected from `requirements.txt`. Explicit: `heroku/python`
 - Django: `DEBUG=False` in production; set via Heroku config var
 - Postgres TLS: `psycopg2` connects via `DATABASE_URL`; Heroku Postgres uses self-signed certs — set `sslmode=require` in connection string or Django's `DATABASES` config
 
+## FastAPI-Specific Gotchas
+
+**Starlette `TemplateResponse` API (Starlette 1.x+):** The signature changed. Always use the new form:
+
+```python
+# ✅ Correct (Starlette 1.x+)
+return templates.TemplateResponse(request, "index.html", {"key": value})
+
+# ❌ Old form — raises TypeError: unhashable type 'dict' at runtime
+return templates.TemplateResponse("index.html", {"request": request, "key": value})
+```
+
+**SQLAlchemy 2.x `selectinload`:** Use class-bound attributes, not strings:
+
+```python
+# ✅ Correct
+query.options(selectinload(Order.items))
+
+# ❌ Fails in SQLAlchemy 2.x
+query.options(selectinload("items"))
+```
+
+**`StrEnum` (Python 3.11+):** Use `StrEnum` directly instead of `class Foo(str, enum.Enum)` to satisfy ruff UP042.
+
 ## Best Practices
 
 ### Formatting & Linting
