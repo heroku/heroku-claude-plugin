@@ -6,7 +6,6 @@
     "name": "jwinn"
   },
   "keywords": ["heroku", "scaffold", "deployment", "docker", "buildpack"],
-  "workflows": ".claude/workflows",
   "license": "MIT",
   "policy": {
     "reference_staleness_days": 30,
