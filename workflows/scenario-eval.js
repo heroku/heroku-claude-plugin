@@ -65,7 +65,7 @@ phase("Execute");
 
 const RESULT_SCHEMA = {
   type: "object",
-  required: ["scenario_id", "stack", "assertions", "app_name", "app_url", "deploy_succeeded", "teardown_succeeded", "moot_saved", "token_usage", "notes"],
+  required: ["scenario_id", "stack", "assertions", "app_name", "app_url", "deploy_succeeded", "teardown_succeeded", "moot_saved", "token_usage", "duration_ms", "notes"],
   properties: {
     scenario_id: { type: "string" },
     stack: { type: "string" },
@@ -93,12 +93,19 @@ const RESULT_SCHEMA = {
         estimated_tokens: { type: "number" },
       },
     },
+    duration_ms: { type: "number" },
     notes: { type: "string" },
   },
 };
 
 const results = await parallel(
   batch.map(scenario => async () => {
+    const startResult = await agent(
+      "Run the command `date +%s` and return only the numeric output as a JSON object with key: epoch (number).",
+      { label: `timer-start:${scenario.id}`, phase: "Execute", schema: { type: "object", required: ["epoch"], properties: { epoch: { type: "number" } } } }
+    );
+    const startEpoch = startResult ? startResult.epoch : 0;
+
     const skillContent = corpus.skills["build-and-deploy"] || "";
     const scaffoldContent = corpus.skills["scaffold-app"] || "";
     const deployContent = corpus.skills["deploy-anonymous"] || "";
@@ -174,16 +181,28 @@ ${reportTemplate}
 
 6. Return the structured result. Include the app name, app URL (empty string if deploy failed),
    whether deploy and teardown succeeded, whether moot saved, an estimated output token count
-   for the full build-and-deploy skill execution, and any notes about deviations or issues.
+   for the full build-and-deploy skill execution, duration_ms (set to 0 — measured by the
+   orchestrator), and any notes about deviations or issues.
 `;
 
-    return agent(prompt, {
+    const result = await agent(prompt, {
       label: `scenario:${scenario.id}`,
       phase: "Execute",
       schema: RESULT_SCHEMA,
       // No worktree isolation — agents scaffold into unique /tmp dirs per scenario,
       // so there is no filesystem collision between parallel runs.
     });
+
+    if (!result) return null;
+
+    const endResult = await agent(
+      "Run the command `date +%s` and return only the numeric output as a JSON object with key: epoch (number).",
+      { label: `timer-end:${scenario.id}`, phase: "Execute", schema: { type: "object", required: ["epoch"], properties: { epoch: { type: "number" } } } }
+    );
+    const endEpoch = endResult ? endResult.epoch : startEpoch;
+    result.duration_ms = (endEpoch - startEpoch) * 1000;
+
+    return result;
   })
 );
 
@@ -212,6 +231,8 @@ const summary = {
     moot_saved: r.moot_saved,
     app_url: r.app_url,
     token_usage: r.token_usage,
+    duration_ms: r.duration_ms,
+    duration_min: Math.round(r.duration_ms / 60000 * 10) / 10,
     assertions_passed: r.assertions.filter(a => a.passed).length,
     assertions_total: r.assertions.length,
     failed_assertions: r.assertions.filter(a => !a.passed).map(a => ({
