@@ -110,6 +110,21 @@ go test -cover ./...        # coverage report
 
 Table-driven tests are the Go idiom — group related cases in a `tests []struct{...}` slice.
 
+**Reaching 90% coverage on handler/db packages:** Go handler and DB packages have many error branches (rows.Err(), scan errors, mid-transaction failures, template render errors) that are unreachable via normal happy-path tests. Write these from the start — do not wait for a coverage shortfall:
+
+- **DB error paths** — use PostgreSQL CHECK constraint or BEFORE INSERT trigger violations to force errors inside transactions:
+  ```sql
+  -- in a test helper
+  _, _ = db.Exec(`ALTER TABLE products ADD CONSTRAINT test_fail CHECK (false)`)
+  // then call your DB function — it will error predictably
+  _, _ = db.Exec(`ALTER TABLE products DROP CONSTRAINT test_fail`)
+  ```
+- **Template render errors** — pass a `failWriter` (implements `io.Writer`, always returns an error) to `templates.ExecuteTemplate` to cover the render error branch.
+- **Form parse errors** — wrap the request body in an `errReader` (always returns an error) to trigger `r.ParseForm()` failures.
+- **rows.Err() and scan errors** — covered naturally when the constraint-injection tests force early exits from query loops.
+
+Write these tests during the TDD cycle, not as a retrofit. Starting below 90% on Go and trying to reach it afterwards is expensive.
+
 ### Security
 
 Use `gosec` for security scanning:

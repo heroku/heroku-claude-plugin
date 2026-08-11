@@ -16,7 +16,7 @@
     "unsupported_addons": ["kafka"],
     "token_budget_tracking": false,
     "token_budgets": {
-      "_description": "Starting estimates — not measured from real Claude invocations. To calibrate: run real skill prompts through Claude, capture actual output token counts, and update these values with headroom. Re-measure when skills change significantly.",
+      "_description": "Calibrated from scenario eval runs (2026-08-10). build-and-deploy measured at ~12000 word-count tokens (proxy) on a full FastAPI+Postgres run; budgets for atomic skills remain estimates pending individual measurement. Re-measure when skills change significantly.",
       "preflight": 300,
       "scaffold-app": 800,
       "deploy-anonymous": 600,
@@ -24,7 +24,7 @@
       "generate-access-code": 400,
       "claim-app": 500,
       "go-live": 400,
-      "build-and-deploy": 1200
+      "build-and-deploy": 20000
     }
   }
 }
