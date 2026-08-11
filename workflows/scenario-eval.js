@@ -65,7 +65,7 @@ phase("Execute");
 
 const RESULT_SCHEMA = {
   type: "object",
-  required: ["scenario_id", "stack", "assertions", "app_name", "app_url", "deploy_succeeded", "teardown_succeeded", "moot_saved", "token_usage", "duration_ms", "notes"],
+  required: ["scenario_id", "stack", "assertions", "app_name", "app_url", "deploy_succeeded", "teardown_succeeded", "moot_saved", "token_usage", "notes"],
   properties: {
     scenario_id: { type: "string" },
     stack: { type: "string" },
@@ -93,7 +93,6 @@ const RESULT_SCHEMA = {
         estimated_tokens: { type: "number" },
       },
     },
-    duration_ms: { type: "number" },
     notes: { type: "string" },
   },
 };
@@ -181,8 +180,8 @@ ${reportTemplate}
 
 6. Return the structured result. Include the app name, app URL (empty string if deploy failed),
    whether deploy and teardown succeeded, whether moot saved, an estimated output token count
-   for the full build-and-deploy skill execution, duration_ms (set to 0 — measured by the
-   orchestrator), and any notes about deviations or issues.
+   for the full build-and-deploy skill execution, and any notes about deviations or issues.
+   Do NOT include a duration_ms field — the orchestrator measures wall-clock time externally.
 `;
 
     const result = await agent(prompt, {
