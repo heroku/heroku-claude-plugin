@@ -107,6 +107,24 @@ return templates.TemplateResponse(request, "index.html", {"key": value})
 return templates.TemplateResponse("index.html", {"request": request, "key": value})
 ```
 
+**SQLAlchemy 2.x ORM mapping:** Use `Mapped[]` + `mapped_column()` — the legacy `Column`-style raises `MappedAnnotationError` at startup:
+
+```python
+# ✅ Correct (SQLAlchemy 2.x)
+from sqlalchemy.orm import Mapped, mapped_column
+
+class Product(Base):
+    __tablename__ = "products"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    price: Mapped[float]
+
+# ❌ Legacy style — raises MappedAnnotationError in SQLAlchemy 2.x
+class Product(Base):
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+```
+
 **SQLAlchemy 2.x `selectinload`:** Use class-bound attributes, not strings:
 
 ```python
@@ -118,6 +136,25 @@ query.options(selectinload("items"))
 ```
 
 **`StrEnum` (Python 3.11+):** Use `StrEnum` directly instead of `class Foo(str, enum.Enum)` to satisfy ruff UP042.
+
+## Django-Specific Gotchas
+
+**Heroku Redis SSL (django-redis):** Heroku Redis mini uses a self-signed certificate chain. Without explicit SSL config, django-redis raises `ssl.SSLCertVerificationError` on first connection. Add to `settings.py`:
+
+```python
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None},
+        },
+    }
+}
+```
+
+The `ssl_cert_reqs: None` disables certificate verification — acceptable for Heroku's managed Redis where the connection is already encrypted at the platform level.
 
 ## Best Practices
 
