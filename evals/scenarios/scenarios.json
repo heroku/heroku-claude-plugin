@@ -1,5 +1,29 @@
 [
   {
+    "id": "smoke-node-supplies-list",
+    "prompt": "Build me a single-page Node.js app that displays a list of restaurant supplies from a PostgreSQL database. The page should just list the supplies — no ordering, no auth. All data should be seeded. I want to host it on Heroku.",
+    "skill": "build-and-deploy",
+    "stack": "node",
+    "variant": null,
+    "addons": ["heroku-postgresql"],
+    "assertions": [
+      "Skill confirms requirements and presents implementation plan before writing code",
+      "UI is implemented — a single HTML page that lists supplies from the database",
+      "A supplies table exists in the database with at least name and category columns",
+      "Database is seeded with demo supply items visible on the page",
+      "Procfile exists with 'web: node' command",
+      "app.json exists and includes heroku-postgresql addon",
+      "package.json exists with a start script",
+      ".gitignore contains node_modules/",
+      "Pre-commit checklist was run and all items passed",
+      "Test coverage is >=90%",
+      "App deploys successfully to Heroku",
+      "Deployed app returns HTTP 200 on the root URL",
+      "App URL returned in final output",
+      "Teardown completes and session saved to moot"
+    ]
+  },
+  {
     "id": "saas-node-express-postgres",
     "prompt": "Build me a SaaS application that allows restaurants to order supplies from us using Node.js and PostgreSQL. I want to host it on Heroku.",
     "skill": "build-and-deploy",
