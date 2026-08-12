@@ -47,6 +47,6 @@ jobs:
       - name: Run release-please
         uses: googleapis/release-please-action@v4
         with:
-          target-branch: ${{ github.ref_name }}
-          config-file: ${{ github.ref_name == 'beta' && '.github/release-configs/release-please-config.beta.json' || '.github/release-configs/release-please-config.json' }}
-          manifest-file: ${{ github.ref_name == 'beta' && '.github/release-configs/release-please-manifest.beta.json' || '.github/release-configs/release-please-manifest.json' }}
+          target-branch: main
+          config-file: .github/release-configs/release-please-config.json
+          manifest-file: .github/release-configs/release-please-manifest.json
