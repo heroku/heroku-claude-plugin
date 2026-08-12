@@ -34,6 +34,25 @@ jobs:
         run: python3 scripts/coverage_report.py --target 15
       - name: Run generator evals
         run: python3 -m unittest discover -s evals/generator -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Validate release-please config
+        # Lint the release config the way release-please itself parses it: confirm
+        # the JSON is well-formed and every extra-files entry resolves to a real
+        # updater (here, .claude-plugin/plugin.json → GenericJson via jsonpath
+        # $.version — the mechanism that bumps the plugin version on release).
+        # Exits non-zero on a malformed config or an unresolvable updater target.
+        # Pinned (not @latest) so CI can't break on an upstream release. One
+        # metadata API call only — the heavier `release-pr --dry-run` commit scan
+        # is deliberately not run here.
+        run: |
+          npx --yes release-please@17.11.1 debug-config \
+            --repo-url=https://github.com/heroku/heroku-plugin \
+            --target-branch=${{ github.ref_name }} \
+            --config-file=.github/release-configs/release-please-config.json \
+            --manifest-file=.github/release-configs/release-please-manifest.json \
+            --token=${{ github.token }}
 
   release-please-pr:
     name: Open/update Release PR
