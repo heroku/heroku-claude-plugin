@@ -1,0 +1,52 @@
+name: Release
+
+# Manual, on-demand release entry point. Runs the Python test suite, then (unless
+# dry_run) invokes release-please to open/update the standing Release PR. This is a
+# Claude Code plugin, not a registry package: "release" = version bump in plugin.json
+# + CHANGELOG + git tag/GitHub Release. There is nothing to ship to a package
+# registry, so this workflow has no registry-upload job and no shared-workflows
+# checkout — it calls the public release-please action directly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description:
+          'Validate only: run the test suite but do not open/update the Release PR'
+        type: boolean
+        default: false
+        required: false
+
+jobs:
+  validate:
+    name: Validate (unit tests + generator evals)
+    runs-on: pub-hk-ubuntu-24.04-ip
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dev dependencies
+        run: pip install "pytest>=8.0" "pytest-cov>=6.0"
+      - name: Run unit tests with coverage
+        run: python3 scripts/coverage_report.py --target 15
+      - name: Run generator evals
+        run: python3 -m unittest discover -s evals/generator -v
+
+  release-please-pr:
+    name: Open/update Release PR
+    needs: validate
+    if: ${{ !inputs.dry_run }}
+    runs-on: pub-hk-ubuntu-24.04-ip
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Run release-please
+        uses: googleapis/release-please-action@v4
+        with:
+          target-branch: main
+          config-file: .github/release-configs/release-please-config.json
+          manifest-file: .github/release-configs/release-please-manifest.json
