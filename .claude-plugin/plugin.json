@@ -16,15 +16,15 @@
     "unsupported_addons": ["kafka"],
     "token_budget_tracking": false,
     "token_budgets": {
-      "_description": "Calibrated from scenario eval runs (2026-08-10). build-and-deploy measured at ~12000 word-count tokens (proxy) on a full FastAPI+Postgres run; budgets for atomic skills remain estimates pending individual measurement. Re-measure when skills change significantly.",
+      "_description": "Benchmarks from scenario eval runs — starting points to improve on, not hard limits. scaffold-app and deploy-anonymous measured from FastAPI+Postgres run (2026-08-12); build-and-deploy avg ~18500 across all stacks (2026-08-10); other atomic skills not yet individually measured.",
       "preflight": 300,
-      "scaffold-app": 800,
-      "deploy-anonymous": 600,
+      "scaffold-app": 8500,
+      "deploy-anonymous": 3200,
       "check-deploy-status": 500,
       "generate-access-code": 400,
       "claim-app": 500,
       "go-live": 400,
-      "build-and-deploy": 20000
+      "build-and-deploy": 18500
     }
   }
 }
