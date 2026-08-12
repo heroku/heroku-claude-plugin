@@ -20,7 +20,7 @@ on:
 jobs:
   validate:
     name: Validate (unit tests + generator evals)
-    runs-on: pub-hk-ubuntu-24.04-ip
+    runs-on: sfdc-hk-ubuntu-latest
     permissions:
       contents: read
     steps:
@@ -39,7 +39,7 @@ jobs:
     name: Open/update Release PR
     needs: validate
     if: ${{ !inputs.dry_run }}
-    runs-on: pub-hk-ubuntu-24.04-ip
+    runs-on: sfdc-hk-ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
@@ -47,6 +47,6 @@ jobs:
       - name: Run release-please
         uses: googleapis/release-please-action@v4
         with:
-          target-branch: main
-          config-file: .github/release-configs/release-please-config.json
-          manifest-file: .github/release-configs/release-please-manifest.json
+          target-branch: ${{ github.ref_name }}
+          config-file: ${{ github.ref_name == 'beta' && '.github/release-configs/release-please-config.beta.json' || '.github/release-configs/release-please-config.json' }}
+          manifest-file: ${{ github.ref_name == 'beta' && '.github/release-configs/release-please-manifest.beta.json' || '.github/release-configs/release-please-manifest.json' }}

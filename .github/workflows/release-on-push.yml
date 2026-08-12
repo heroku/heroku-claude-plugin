@@ -1,20 +1,22 @@
 name: Release on Push
 
-# Runs release-please on every push to main. Two things happen here over a release
-# cycle: (1) while commits accumulate, it opens/updates the standing Release PR
-# (bumping .claude-plugin/plugin.json $.version + CHANGELOG.md); (2) once that PR is
-# merged, the next run tags vX.Y.Z and creates the GitHub Release. Nothing is shipped
-# to a package registry — a Claude Code plugin is consumed from the git tag itself.
+# Runs release-please on every push to main and beta. Two things happen over a release
+# cycle: (1) while commits accumulate, it opens/updates the standing Release PR for that
+# branch (bumping .claude-plugin/plugin.json $.version + CHANGELOG.md); (2) once that PR
+# is merged, the next run tags the version and creates the GitHub Release. main cuts
+# stable vX.Y.Z; beta cuts prereleases (vX.Y.Z-beta.N) via the .beta config. Nothing is
+# shipped to a package registry — a Claude Code plugin is consumed from the git tag.
 
 on:
   push:
     branches:
       - main
+      - beta
 
 jobs:
   release-please:
     name: Release PR + tag/release
-    runs-on: pub-hk-ubuntu-24.04-ip
+    runs-on: sfdc-hk-ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
@@ -22,6 +24,6 @@ jobs:
       - name: Run release-please
         uses: googleapis/release-please-action@v4
         with:
-          target-branch: main
-          config-file: .github/release-configs/release-please-config.json
-          manifest-file: .github/release-configs/release-please-manifest.json
+          target-branch: ${{ github.ref_name }}
+          config-file: ${{ github.ref_name == 'beta' && '.github/release-configs/release-please-config.beta.json' || '.github/release-configs/release-please-config.json' }}
+          manifest-file: ${{ github.ref_name == 'beta' && '.github/release-configs/release-please-manifest.beta.json' || '.github/release-configs/release-please-manifest.json' }}
