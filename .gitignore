@@ -12,3 +12,6 @@ mcp/references/
 .coverage
 .pytest_cache/
 htmlcov/
+*.egg-info/
+build/
+dist/
