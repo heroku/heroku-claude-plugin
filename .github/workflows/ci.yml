@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    # Only run on pushes to main; PRs trigger via pull_request to avoid duplicate runs
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -17,7 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dev dependencies
-        run: pip install "pytest>=8.0" "pytest-cov>=6.0"
+        run: pip install ".[dev]"
       - name: Run unit tests with coverage
         # Interim threshold while PRs 2+3 add stack/preflight tests; target is 90%
         run: python3 scripts/coverage_report.py --target 15

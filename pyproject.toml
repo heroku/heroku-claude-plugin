@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heroku-claude-plugin"
+version = "0.1.0"
+description = "Scaffold and deploy applications to Heroku from natural language prompts."
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=6.0",
+]
+
+[tool.setuptools]
+# This repo is a Claude plugin, not an importable Python distribution — its code
+# lives in scripts/, evals/, hooks/, etc. pyproject.toml exists for dependency
+# management (Dependabot discovers the pip ecosystem here) and tool config, so
+# disable package auto-discovery to avoid setuptools' multi-top-level error.
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=scripts --cov-report=term-missing --cov-fail-under=0"
