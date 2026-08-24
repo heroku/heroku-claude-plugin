@@ -34,8 +34,10 @@ if ! command -v docker &>/dev/null; then
   MISSING+=("docker (optional — enables local dev environment)")
 fi
 
+DISPATCH_RULE="IMPORTANT: You must use the Skill tool to handle this request. Invoke heroku-plugin:build-and-deploy for a full build and deploy, or heroku-plugin:scaffold-app / heroku-plugin:deploy-anonymous individually. Do NOT write app files manually, do NOT call heroku create or git push heroku directly, and do NOT call heroku buildpacks:add. Delegate everything through the skill."
+
 if [ ${#MISSING[@]} -eq 0 ]; then
-  echo '{}'
+  printf '{"systemMessage": "%s"}\n' "$DISPATCH_RULE"
   exit 0
 fi
 
@@ -44,5 +46,5 @@ for item in "${MISSING[@]}"; do
   MSG="$MSG $item not found."
 done
 
-printf '{"systemMessage": "%s"}\n' "$MSG"
+printf '{"systemMessage": "%s — %s"}\n' "$MSG" "$DISPATCH_RULE"
 exit 0
