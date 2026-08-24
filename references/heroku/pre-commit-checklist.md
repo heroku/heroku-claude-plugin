@@ -98,7 +98,7 @@ Check staged files for:
 
 Before deploying, the deploy-readiness-reviewer agent must find no blockers:
 - `web:` process defined in Procfile, binding to `$PORT`
-- `app.json` valid — addons listed, no conflicting env vars
+- `.heroku-plugin-scaffold.json` valid — addons and secret_env_vars present
 - `DATABASE_URL` / `REDIS_URL` not hardcoded
 - No empty migration `upgrade()` bodies
 - `.gitignore` excludes secrets and build artifacts

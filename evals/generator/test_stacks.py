@@ -7,7 +7,6 @@ Keep:     KEEP_EVAL_ARTIFACTS=1 python3 -m unittest discover -s evals/generator
 
 import json
 import shutil
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -32,22 +31,16 @@ class NodeStackEval(ScaffoldEvalCase):
         self.assertTrue((target / "server.js").exists())
         self.assertTrue((target / "package.json").exists())
         self.assert_procfile_web(target, "npm start")
-        self.assert_no_app_json_buildpacks(target)
-        self.assert_app_json_addons(target, [])
+        self.assert_scaffold_json(target, expected_addons=[])
         self.assert_project_toml(target, "heroku/nodejs")
         self.assert_gitignore_has(target, "node_modules/")
         self.assert_no_duplicate_gitignore(target)
 
     def test_contract_with_addons(self) -> None:
         target, summary = self.scaffold("node-addons", addons="postgres,redis")
-        self.assertEqual(
-            summary["addons"],
-            ["heroku-postgresql", "heroku-redis"],
-        )
-        self.assert_app_json_addons(target, ["heroku-postgresql", "heroku-redis"])
-        data = json.loads((target / "app.json").read_text())
-        self.assertIn("DATABASE_URL", data.get("env", {}))
-        self.assertIn("REDIS_URL", data.get("env", {}))
+        self.assertEqual(summary["addons"], ["heroku-postgresql", "heroku-redis"])
+        data = self.assert_scaffold_json(target, expected_addons=["heroku-postgresql", "heroku-redis"])
+        self.assertFalse((target / "app.json").exists(), "app.json should not exist")
 
     def test_determinism(self) -> None:
         self.assert_layer2_deterministic("det-node")
@@ -69,7 +62,7 @@ class NodeStackEval(ScaffoldEvalCase):
 
     def test_lf_newlines(self) -> None:
         target, _ = self.scaffold("node-lf")
-        for fname in ["Procfile", "app.json", "server.js"]:
+        for fname in ["Procfile", "project.toml", "server.js"]:
             self.assert_lf_only(target / fname)
             self.assert_trailing_newline(target / fname)
 
@@ -89,13 +82,13 @@ class PythonFastAPIEval(ScaffoldEvalCase):
         self.assertTrue((target / ".python-version").exists())
         self.assert_procfile_web(target, "gunicorn")
         self.assert_procfile_web(target, "$PORT")
-        self.assert_no_app_json_buildpacks(target)
+        self.assert_scaffold_json(target, expected_addons=[])
         self.assert_project_toml(target, "heroku/python")
         self.assert_gitignore_has(target, "__pycache__/", ".venv/")
 
     def test_contract_with_postgres(self) -> None:
         target, summary = self.scaffold("fastapi-pg", variant="fastapi", addons="postgres")
-        self.assert_app_json_addons(target, ["heroku-postgresql"])
+        self.assert_scaffold_json(target, expected_addons=["heroku-postgresql"])
         reqs = (target / "requirements.txt").read_text()
         self.assertIn("psycopg2-binary", reqs)
 
@@ -117,7 +110,7 @@ class PythonFastAPIEval(ScaffoldEvalCase):
 
     def test_lf_newlines(self) -> None:
         target, _ = self.scaffold("fastapi-lf", variant="fastapi")
-        for fname in ["Procfile", "app.json", "requirements.txt", ".python-version"]:
+        for fname in ["Procfile", "project.toml", "requirements.txt", ".python-version"]:
             self.assert_lf_only(target / fname)
             self.assert_trailing_newline(target / fname)
 
@@ -135,6 +128,7 @@ class PythonFlaskEval(ScaffoldEvalCase):
         self.assertTrue((target / "app.py").exists())
         self.assert_procfile_web(target, "gunicorn app:app")
         self.assert_procfile_web(target, "$PORT")
+        self.assert_scaffold_json(target, expected_addons=[])
 
     def test_determinism(self) -> None:
         self.assert_layer2_deterministic("det-flask", variant="flask")
@@ -152,14 +146,13 @@ class GoStackEval(ScaffoldEvalCase):
         self.assertTrue((target / "main.go").exists())
         self.assertTrue((target / "go.mod").exists())
         self.assert_procfile_web(target, "bin/hello-go")
-        self.assert_no_app_json_buildpacks(target)
-        self.assert_app_json_addons(target, [])
+        self.assert_scaffold_json(target, expected_addons=[])
         self.assert_project_toml(target, "heroku/go")
         self.assert_gitignore_has(target, "bin/")
 
     def test_contract_with_addons(self) -> None:
         target, summary = self.scaffold("go-addons", addons="postgres,redis")
-        self.assert_app_json_addons(target, ["heroku-postgresql", "heroku-redis"])
+        self.assert_scaffold_json(target, expected_addons=["heroku-postgresql", "heroku-redis"])
 
     def test_determinism(self) -> None:
         self.assert_layer2_deterministic("det-go")
@@ -183,7 +176,7 @@ class GoStackEval(ScaffoldEvalCase):
 
     def test_lf_newlines(self) -> None:
         target, _ = self.scaffold("go-lf")
-        for fname in ["Procfile", "app.json", "main.go", "go.mod"]:
+        for fname in ["Procfile", "project.toml", "main.go", "go.mod"]:
             self.assert_lf_only(target / fname)
             self.assert_trailing_newline(target / fname)
 
@@ -232,9 +225,8 @@ class AddonValidationEval(ScaffoldEvalCase):
     def test_addon_list_sorted(self) -> None:
         target, summary = self.scaffold("sorted-addons", addons="redis,postgres")
         self.assertEqual(summary["addons"], ["heroku-postgresql", "heroku-redis"])
-        data = json.loads((target / "app.json").read_text())
-        addons = data.get("addons", [])
-        self.assertEqual(addons, sorted(addons), "app.json addons not sorted")
+        data = self.assert_scaffold_json(target)
+        self.assertEqual(data["addons"], sorted(data["addons"]), "scaffold addons not sorted")
 
 
 # ---------------------------------------------------------------------------
@@ -248,32 +240,22 @@ class PythonDjangoEval(ScaffoldEvalCase):
 
     def test_contract(self) -> None:
         target, summary = self.scaffold("hello-django")
-        # requirements.txt must exist and contain django + gunicorn
         reqs_path = target / "requirements.txt"
         self.assertTrue(reqs_path.exists(), "requirements.txt missing")
         reqs = reqs_path.read_text(encoding="utf-8")
         self.assertIn("django", reqs.lower())
         self.assertIn("gunicorn", reqs)
-        # Procfile web: gunicorn config.wsgi, $PORT
         self.assert_procfile_web(target, "gunicorn config.wsgi")
         self.assert_procfile_web(target, "$PORT")
-        # Procfile release: python manage.py migrate
         self.assert_procfile_release(target, "python manage.py migrate")
-        # app.json buildpack
-        self.assert_no_app_json_buildpacks(target)
-        # app.json addons — Django default includes postgres
-        self.assert_app_json_addons(target, ["heroku-postgresql"])
-        # app.json env must include DJANGO_SECRET_KEY and DJANGO_DEBUG
-        data = json.loads((target / "app.json").read_text(encoding="utf-8"))
-        env = data.get("env", {})
-        self.assertIn("DJANGO_SECRET_KEY", env)
-        self.assertIn("DJANGO_DEBUG", env)
-        # .python-version must exist
+        self.assert_project_toml(target, "heroku/python")
+        data = self.assert_scaffold_json(target, expected_addons=["heroku-postgresql"])
+        self.assertIn("DJANGO_SECRET_KEY", data.get("secret_env_vars", []))
         self.assertTrue((target / ".python-version").exists(), ".python-version missing")
 
     def test_contract_with_redis(self) -> None:
         target, _ = self.scaffold("django-redis", addons="redis")
-        self.assert_app_json_addons(target, ["heroku-postgresql", "heroku-redis"])
+        self.assert_scaffold_json(target, expected_addons=["heroku-postgresql", "heroku-redis"])
         reqs = (target / "requirements.txt").read_text(encoding="utf-8")
         self.assertIn("redis", reqs)
 
@@ -292,7 +274,7 @@ class PythonDjangoEval(ScaffoldEvalCase):
 
     def test_lf_newlines(self) -> None:
         target, _ = self.scaffold("django-lf")
-        for fname in ["Procfile", "app.json", "requirements.txt", ".python-version"]:
+        for fname in ["Procfile", "project.toml", "requirements.txt", ".python-version"]:
             self.assert_lf_only(target / fname)
             self.assert_trailing_newline(target / fname)
 
@@ -307,23 +289,12 @@ class RailsStackEval(ScaffoldEvalCase):
 
     def test_contract(self) -> None:
         target, summary = self.scaffold("hello-rails")
-        # Procfile web: bundle exec puma, PORT env var referenced
         self.assert_procfile_web(target, "bundle exec puma")
         self.assert_procfile_web(target, "PORT")
-        # Procfile release: bundle exec rails db:migrate
         self.assert_procfile_release(target, "bundle exec rails db:migrate")
-        # app.json buildpack
-        self.assert_no_app_json_buildpacks(target)
         self.assert_project_toml(target, "heroku/ruby")
-        # app.json addons — Rails default includes postgres
-        self.assert_app_json_addons(target, ["heroku-postgresql"])
-        # app.json env
-        data = json.loads((target / "app.json").read_text(encoding="utf-8"))
-        env = data.get("env", {})
-        self.assertIn("RAILS_MASTER_KEY", env)
-        self.assertIn("RAILS_LOG_TO_STDOUT", env)
-        self.assertIn("RAILS_SERVE_STATIC_FILES", env)
-        # Linting config files
+        data = self.assert_scaffold_json(target, expected_addons=["heroku-postgresql"])
+        self.assertIn("RAILS_MASTER_KEY", data.get("secret_env_vars", []))
         self.assertTrue((target / ".rubocop.yml").exists(), ".rubocop.yml missing")
         self.assertTrue(
             (target / ".pre-commit-config.yaml").exists(),
@@ -332,14 +303,14 @@ class RailsStackEval(ScaffoldEvalCase):
 
     def test_contract_with_redis(self) -> None:
         target, _ = self.scaffold("rails-redis", addons="redis")
-        self.assert_app_json_addons(target, ["heroku-postgresql", "heroku-redis"])
+        self.assert_scaffold_json(target, expected_addons=["heroku-postgresql", "heroku-redis"])
 
     def test_determinism(self) -> None:
         self.assert_layer2_deterministic("det-rails")
 
     def test_lf_newlines(self) -> None:
         target, _ = self.scaffold("rails-lf")
-        for fname in ["Procfile", "app.json"]:
+        for fname in ["Procfile", "project.toml"]:
             self.assert_lf_only(target / fname)
             self.assert_trailing_newline(target / fname)
 

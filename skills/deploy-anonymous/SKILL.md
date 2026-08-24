@@ -27,8 +27,8 @@ If any fail, surface the preflight error and stop.
 
 Check that the target directory exists and contains:
 - `Procfile` with `web:` process
-- `app.json`
 - `project.toml` (CNB buildpack specification — required)
+- `.heroku-plugin-scaffold.json` (scaffold summary — source of truth for addons and secret env vars)
 - `.git/` directory (git repo initialized)
 
 If missing, suggest running `/heroku-plugin:scaffold-app` first.
@@ -52,23 +52,21 @@ Creating ⬢ <app-name>... done
 https://<app-name>.herokuapp.com/ | https://git.heroku.com/<app-name>.git
 ```
 
-## Step 5 — Apply app.json configuration
+## Step 5 — Apply configuration
 
-`heroku create --no-remote` does **not** process `app.json` — generators, buildpacks, and env
-entries are only applied during Heroku Button / `heroku create --manifest` deploys. Apply them
-manually in this order:
+Read `.heroku-plugin-scaffold.json` in the target directory. It contains:
+- `addons` — list of canonical addon slugs to provision
+- `secret_env_vars` — list of env var names that need generated secrets before push
 
-### 5a — Set env vars from generators
+### 5a — Set generated secrets
 
-Read `app.json` and look for env entries with `"generator": "secret"`. For each one, generate
-and set the value before pushing:
+For each name in `secret_env_vars`, generate and set the value before pushing:
 
 ```bash
-# For each env var with "generator": "secret" in app.json:
 heroku config:set <KEY>=$(python3 -c 'import secrets; print(secrets.token_hex(32))') --app <app-name>
 ```
 
-Common examples: `DJANGO_SECRET_KEY`, `SECRET_KEY_BASE` (Rails), `SECRET_KEY` (Flask).
+Common examples: `DJANGO_SECRET_KEY` (Django), `RAILS_MASTER_KEY` (Rails).
 
 ### 5b — Buildpacks
 
@@ -90,7 +88,7 @@ This is safe — it only affects the build phase, not the runtime.
 
 ### 5c — Provision addons
 
-For each addon in the `addons` array, provision it:
+For each addon in the `addons` array from `.heroku-plugin-scaffold.json`, provision it:
 
 ```bash
 # heroku-postgresql

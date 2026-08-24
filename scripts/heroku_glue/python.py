@@ -168,6 +168,11 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
         common.write_docker_compose(target_dir, app_name, addons)
 
 
+def secret_env_vars(options: dict) -> list[str]:
+    variant = options.get("variant", DEFAULT_VARIANT)
+    return ["DJANGO_SECRET_KEY"] if variant == "django" else []
+
+
 def gitignore_lines(options: dict) -> list[str]:
     return [
         "__pycache__/",
@@ -199,20 +204,6 @@ def _apply_fastapi(app_name: str, target_dir: Path, addons: list[str]) -> None:
         f"web: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT",
     )
 
-    env = {}
-    if "heroku-postgresql" in addons:
-        env["DATABASE_URL"] = {"description": "Heroku Postgres connection string", "required": True}
-    if "heroku-redis" in addons:
-        env["REDIS_URL"] = {"description": "Heroku Redis connection string", "required": True}
-
-    app_json = common.build_app_json(
-        app_name,
-        addons=addons,
-        env=env if env else None,
-        formation={"web": {"quantity": 1, "size": "basic"}},
-    )
-    common.write_json(target_dir / "app.json", app_json)
-
 
 def _apply_flask(app_name: str, target_dir: Path, addons: list[str]) -> None:
     common.write_file(target_dir / "app.py", _FLASK_APP)
@@ -225,20 +216,6 @@ def _apply_flask(app_name: str, target_dir: Path, addons: list[str]) -> None:
     common.write_file(target_dir / "requirements.txt", "\n".join(sorted(reqs)))
 
     common.write_file(target_dir / "Procfile", f"web: gunicorn app:app --bind 0.0.0.0:$PORT")
-
-    env = {}
-    if "heroku-postgresql" in addons:
-        env["DATABASE_URL"] = {"description": "Heroku Postgres connection string", "required": True}
-    if "heroku-redis" in addons:
-        env["REDIS_URL"] = {"description": "Heroku Redis connection string", "required": True}
-
-    app_json = common.build_app_json(
-        app_name,
-        addons=addons,
-        env=env if env else None,
-        formation={"web": {"quantity": 1, "size": "basic"}},
-    )
-    common.write_json(target_dir / "app.json", app_json)
 
 
 def _apply_django(app_name: str, target_dir: Path, addons: list[str]) -> None:
@@ -269,23 +246,6 @@ def _apply_django(app_name: str, target_dir: Path, addons: list[str]) -> None:
         target_dir / "Procfile",
         "web: gunicorn config.wsgi --bind 0.0.0.0:$PORT\nrelease: python manage.py migrate",
     )
-
-    env = {
-        "DJANGO_SECRET_KEY": {"generator": "secret"},
-        "DJANGO_DEBUG": {"value": "False"},
-    }
-    if "heroku-postgresql" in addons:
-        env["DATABASE_URL"] = {"description": "Heroku Postgres connection string", "required": True}
-    if "heroku-redis" in addons:
-        env["REDIS_URL"] = {"description": "Heroku Redis connection string", "required": True}
-
-    app_json = common.build_app_json(
-        app_name,
-        addons=addons,
-        env=env,
-        formation={"web": {"quantity": 1, "size": "basic"}},
-    )
-    common.write_json(target_dir / "app.json", app_json)
 
 
 def _write_dockerfile(target_dir: Path, variant: str) -> None:

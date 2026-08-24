@@ -129,34 +129,8 @@ def merge_gitignore(target_dir: Path, lines: list[str]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# app.json + docker-compose builders
+# docker-compose builder
 # ---------------------------------------------------------------------------
-
-def build_app_json(
-    app_name: str,
-    *,
-    addons: list[str] | None = None,
-    env: dict | None = None,
-    formation: dict | None = None,
-    description: str = "",
-    stack: str = "heroku-24",
-) -> dict:
-    """Assemble a deterministic app.json manifest.
-
-    Buildpack specification is handled by project.toml (CNB on Cedar);
-    app.json does not declare buildpacks.
-    """
-    data: dict = {"name": app_name, "stack": stack}
-    if description:
-        data["description"] = description
-    if env:
-        data["env"] = env
-    if addons:
-        data["addons"] = sorted(addons)
-    if formation:
-        data["formation"] = formation
-    return data
-
 
 def build_docker_compose(app_name: str, addons: list[str]) -> dict:
     """Build a deterministic docker-compose.yml mirroring Heroku addon config vars."""
@@ -275,4 +249,6 @@ BASE_GITIGNORE = [
     ".DS_Store",
     "*.swp",
     "*.swo",
+    ".heroku-plugin-scaffold.json",
+    ".heroku-plugin-session.json",
 ]
