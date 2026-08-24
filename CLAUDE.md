@@ -18,6 +18,15 @@ claude --plugin-dir /path/to/heroku-plugin
 
 The `UserPromptSubmit` hook fires automatically on any build or deploy prompt — no setup step needed. Just describe what you want to build and the plugin takes it from there. Preflight failures (missing git, not logged in to Heroku, etc.) are surfaced inline before any skill runs.
 
+## Skill Dispatch (Required)
+
+**Never scaffold, build, or deploy by running bash commands directly.** Always invoke the appropriate skill via the `Skill` tool:
+
+- Use `heroku-plugin:build-and-deploy` for a full build + deploy in one step
+- Use individual atomic skills (`heroku-plugin:scaffold-app`, `heroku-plugin:deploy-anonymous`, etc.) when the user invokes them explicitly
+
+Do not reproduce skill steps inline. Do not call `heroku create`, `git push heroku`, or `heroku buildpacks:add` directly — those are the skill's responsibility. Delegate via the `Skill` tool every time.
+
 ## Commands
 
 ### Tests
