@@ -55,11 +55,19 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/heroku/deploy-contract.md` and
 ## Step 3 — Check app.json
 
 - `name` field present
-- `buildpacks` array present with correct slug for the stack
+- `buildpacks` key is **absent** — buildpack specification is handled by `project.toml` (CNB on Cedar); flag its presence as a blocker, not its absence
 - `addons` array matches what the app actually uses
 - `env` declares all config vars the app reads
 - `stack` is `heroku-24` (or `heroku-26`)
 - `formation.web` is defined
+
+## Step 3b — Check project.toml
+
+- `project.toml` exists in the app root
+- Contains `schema-version = "0.2"`
+- Contains `builder = "heroku/builder:24"`
+- Contains the correct language buildpack id for the stack
+- Contains `id = "heroku/procfile"` as the last buildpack
 
 ## Step 4 — Check $PORT binding
 
@@ -111,7 +119,7 @@ Verify these are excluded:
 ## ✓ Passing
 
 - Procfile: web process defined with $PORT
-- app.json: buildpack heroku/python correct
+- app.json: no buildpacks key (correct — project.toml handles this)
 - ...
 
 ## ✗ Blockers (must fix before deploying)
