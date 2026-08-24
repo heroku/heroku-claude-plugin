@@ -153,6 +153,8 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
     else:
         raise common.ScaffoldError(f"Unknown Python variant '{variant}'. Choose: fastapi, django, flask.")
 
+    common.write_file(target_dir / "project.toml", common.build_project_toml("heroku/python"))
+
     # Shared .gitignore
     common.merge_gitignore(target_dir, common.BASE_GITIGNORE + gitignore_lines(options))
 

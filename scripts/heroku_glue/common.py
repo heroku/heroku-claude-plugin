@@ -203,6 +203,34 @@ def write_docker_compose(target_dir: Path, app_name: str, addons: list[str]) -> 
 
 
 # ---------------------------------------------------------------------------
+# project.toml builder (CNB on Cedar)
+# ---------------------------------------------------------------------------
+
+CNB_BUILDER = "heroku/builder:24"
+
+
+def build_project_toml(buildpack_id: str) -> str:
+    """Render a deterministic project.toml for CNB on Cedar.
+
+    Pins the builder to heroku/builder:24 and declares the language buildpack
+    followed by heroku/procfile (required when a Procfile is present).
+    """
+    return (
+        '[_]\n'
+        'schema-version = "0.2"\n'
+        '\n'
+        '[io.buildpacks]\n'
+        f'builder = "{CNB_BUILDER}"\n'
+        '\n'
+        '[[io.buildpacks.group]]\n'
+        f'id = "{buildpack_id}"\n'
+        '\n'
+        '[[io.buildpacks.group]]\n'
+        'id = "heroku/procfile"\n'
+    )
+
+
+# ---------------------------------------------------------------------------
 # Subprocess + toolchain helpers
 # ---------------------------------------------------------------------------
 

@@ -34,6 +34,7 @@ class NodeStackEval(ScaffoldEvalCase):
         self.assert_procfile_web(target, "npm start")
         self.assert_app_json_buildpack(target, "heroku/nodejs")
         self.assert_app_json_addons(target, [])
+        self.assert_project_toml(target, "heroku/nodejs")
         self.assert_gitignore_has(target, "node_modules/")
         self.assert_no_duplicate_gitignore(target)
 
@@ -89,6 +90,7 @@ class PythonFastAPIEval(ScaffoldEvalCase):
         self.assert_procfile_web(target, "gunicorn")
         self.assert_procfile_web(target, "$PORT")
         self.assert_app_json_buildpack(target, "heroku/python")
+        self.assert_project_toml(target, "heroku/python")
         self.assert_gitignore_has(target, "__pycache__/", ".venv/")
 
     def test_contract_with_postgres(self) -> None:
@@ -152,6 +154,7 @@ class GoStackEval(ScaffoldEvalCase):
         self.assert_procfile_web(target, "bin/hello-go")
         self.assert_app_json_buildpack(target, "heroku/go")
         self.assert_app_json_addons(target, [])
+        self.assert_project_toml(target, "heroku/go")
         self.assert_gitignore_has(target, "bin/")
 
     def test_contract_with_addons(self) -> None:
@@ -311,6 +314,7 @@ class RailsStackEval(ScaffoldEvalCase):
         self.assert_procfile_release(target, "bundle exec rails db:migrate")
         # app.json buildpack
         self.assert_app_json_buildpack(target, "heroku/ruby")
+        self.assert_project_toml(target, "heroku/ruby")
         # app.json addons — Rails default includes postgres
         self.assert_app_json_addons(target, ["heroku-postgresql"])
         # app.json env

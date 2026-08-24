@@ -16,10 +16,10 @@ SCAFFOLD = REPO_ROOT / "scripts" / "scaffold.py"
 
 # Layer 2 files asserted for byte-identity across runs
 LAYER2_FILES = {
-    "node":   ["Procfile", "app.json", "eslint.config.js", ".prettierrc", ".pre-commit-config.yaml"],
-    "python": ["Procfile", "app.json", "requirements.txt", ".python-version", ".pre-commit-config.yaml", "pyproject.toml"],
-    "rails":  ["Procfile", "app.json", ".rubocop.yml", ".pre-commit-config.yaml"],
-    "go":     ["Procfile", "app.json", "main.go", "go.mod", ".golangci.yml", ".pre-commit-config.yaml"],
+    "node":   ["Procfile", "app.json", "project.toml", "eslint.config.js", ".prettierrc", ".pre-commit-config.yaml"],
+    "python": ["Procfile", "app.json", "project.toml", "requirements.txt", ".python-version", ".pre-commit-config.yaml", "pyproject.toml"],
+    "rails":  ["Procfile", "app.json", "project.toml", ".rubocop.yml", ".pre-commit-config.yaml"],
+    "go":     ["Procfile", "app.json", "project.toml", "main.go", "go.mod", ".golangci.yml", ".pre-commit-config.yaml"],
 }
 
 LAYER2_DOCKER_FILES = ["Dockerfile", "docker-compose.yml"]
@@ -93,6 +93,15 @@ class ScaffoldEvalCase(unittest.TestCase):
         release_lines = [ln for ln in content.splitlines() if ln.startswith("release:")]
         self.assertTrue(release_lines, "No release: line found")
         self.assertIn(expected_substr, release_lines[0])
+
+    def assert_project_toml(self, target_dir: Path, expected_buildpack: str) -> None:
+        path = target_dir / "project.toml"
+        self.assertTrue(path.exists(), "project.toml missing")
+        content = path.read_text(encoding="utf-8")
+        self.assertIn('schema-version = "0.2"', content, "project.toml missing schema-version")
+        self.assertIn('builder = "heroku/builder:24"', content, "project.toml missing pinned builder")
+        self.assertIn(f'id = "{expected_buildpack}"', content, f"project.toml missing buildpack {expected_buildpack}")
+        self.assertIn('id = "heroku/procfile"', content, "project.toml missing heroku/procfile")
 
     def assert_app_json_addons(self, target_dir: Path, expected_slugs: list[str]) -> dict:
         app_json_path = target_dir / "app.json"

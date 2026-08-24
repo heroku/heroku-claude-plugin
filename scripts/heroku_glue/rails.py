@@ -122,6 +122,7 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
     app_json["buildpacks"] = buildpacks
 
     common.write_json(target_dir / "app.json", app_json)
+    common.write_file(target_dir / "project.toml", common.build_project_toml("heroku/ruby"))
     common.merge_gitignore(target_dir, gitignore_lines(options))
     common.write_file(target_dir / ".rubocop.yml", _RUBOCOP_YML)
     common.write_file(target_dir / ".pre-commit-config.yaml", _PRECOMMIT_CONFIG)

@@ -131,6 +131,7 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
     )
     common.write_json(target_dir / "app.json", app_json)
 
+    common.write_file(target_dir / "project.toml", common.build_project_toml("heroku/nodejs"))
     common.merge_gitignore(target_dir, common.BASE_GITIGNORE + gitignore_lines(options))
 
     if options.get("with_docker"):
