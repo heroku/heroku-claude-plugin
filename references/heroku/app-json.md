@@ -10,7 +10,7 @@ Heroku app manifest. Used by Review Apps, Deploy Button, and the plugin to decla
 {
   "name": "my-app",
   "description": "A Heroku app",
-  "buildpacks": [{ "url": "heroku/python" }],
+  "stack": "heroku-24",
   "addons": ["heroku-postgresql"],
   "env": {
     "SECRET_KEY": { "generator": "secret" }
@@ -20,6 +20,8 @@ Heroku app manifest. Used by Review Apps, Deploy Button, and the plugin to decla
   }
 }
 ```
+
+Note: no `buildpacks` key — buildpack specification is handled by `project.toml` (CNB on Cedar).
 
 ## Fields
 
@@ -33,11 +35,8 @@ Brief summary shown in dashboard.
 
 ### `buildpacks` (array)
 
-```json
-"buildpacks": [{ "url": "heroku/python" }]
-```
-
-For Cedar (classic) apps only. Use `project.toml` for Fir (CNB) apps.
+**Do not use in this plugin.** Buildpack specification is handled by `project.toml` (CNB on Cedar).
+The `buildpacks` key is omitted from all scaffolded `app.json` files. Including it is a bug, not a fix.
 
 ### `addons` (array)
 

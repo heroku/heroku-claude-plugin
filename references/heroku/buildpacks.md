@@ -24,7 +24,7 @@ Ruby, Python, Java, Clojure, Node.js, Scala, Go, PHP, .NET
 
 - Auto-detected from marker files (`package.json`, `go.mod`, `Gemfile`, `requirements.txt`, etc.)
 - Once set on an app, locked for future deploys unless changed
-- Specified in `app.json` `buildpacks` array
+- **Not used by this plugin** — this plugin targets CNB on Cedar via `project.toml`
 
 ## Cloud Native Buildpacks (CNB)
 
