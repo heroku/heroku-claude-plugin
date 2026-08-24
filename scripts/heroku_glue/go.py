@@ -126,7 +126,6 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
 
     app_json = common.build_app_json(
         app_name,
-        buildpack="heroku/go",
         addons=addons,
         env=env if env else None,
         formation={"web": {"quantity": 1, "size": "basic"}},

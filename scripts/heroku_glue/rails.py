@@ -109,18 +109,12 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
     if "heroku-redis" in addons:
         env["REDIS_URL"] = {"description": "Heroku Redis connection string", "required": True}
 
-    buildpacks = [{"url": "heroku/ruby"}]
-
     app_json = common.build_app_json(
         app_name,
-        buildpack="heroku/ruby",
         addons=addons,
         env=env,
         formation={"web": {"quantity": 1, "size": "basic"}},
     )
-    # Rails may need nodejs buildpack for asset pipeline — add it first if present
-    app_json["buildpacks"] = buildpacks
-
     common.write_json(target_dir / "app.json", app_json)
     common.write_file(target_dir / "project.toml", common.build_project_toml("heroku/ruby"))
     common.merge_gitignore(target_dir, gitignore_lines(options))

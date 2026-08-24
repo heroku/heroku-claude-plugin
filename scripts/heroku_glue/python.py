@@ -207,7 +207,6 @@ def _apply_fastapi(app_name: str, target_dir: Path, addons: list[str]) -> None:
 
     app_json = common.build_app_json(
         app_name,
-        buildpack="heroku/python",
         addons=addons,
         env=env if env else None,
         formation={"web": {"quantity": 1, "size": "basic"}},
@@ -235,7 +234,6 @@ def _apply_flask(app_name: str, target_dir: Path, addons: list[str]) -> None:
 
     app_json = common.build_app_json(
         app_name,
-        buildpack="heroku/python",
         addons=addons,
         env=env if env else None,
         formation={"web": {"quantity": 1, "size": "basic"}},
@@ -283,7 +281,6 @@ def _apply_django(app_name: str, target_dir: Path, addons: list[str]) -> None:
 
     app_json = common.build_app_json(
         app_name,
-        buildpack="heroku/python",
         addons=addons,
         env=env,
         formation={"web": {"quantity": 1, "size": "basic"}},

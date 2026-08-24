@@ -28,6 +28,7 @@ If any fail, surface the preflight error and stop.
 Check that the target directory exists and contains:
 - `Procfile` with `web:` process
 - `app.json`
+- `project.toml` (CNB buildpack specification — required)
 - `.git/` directory (git repo initialized)
 
 If missing, suggest running `/heroku-plugin:scaffold-app` first.
@@ -69,27 +70,12 @@ heroku config:set <KEY>=$(python3 -c 'import secrets; print(secrets.token_hex(32
 
 Common examples: `DJANGO_SECRET_KEY`, `SECRET_KEY_BASE` (Rails), `SECRET_KEY` (Flask).
 
-### 5b — Apply buildpacks
+### 5b — Buildpacks
 
-Read `app.json` and look for the `buildpacks` array. Apply each in order:
-
-```bash
-# For each buildpack in app.json buildpacks array (in order):
-heroku buildpacks:add --index <N> <url> --app <app-name>
-```
-
-Example — Node.js app:
-```bash
-heroku buildpacks:add --index 1 heroku/nodejs --app <app-name>
-```
-
-Example — Vue.js + Python (multi-buildpack):
-```bash
-heroku buildpacks:add --index 1 heroku/nodejs --app <app-name>
-heroku buildpacks:add --index 2 heroku/python --app <app-name>
-```
-
-If `app.json` has no `buildpacks` array, Heroku will auto-detect. Skip this step.
+All scaffolded apps include a `project.toml` that specifies the buildpack for CNB on Cedar.
+**Do not call `heroku buildpacks:add`** and do not flag a missing `buildpacks` key in `app.json`
+as a problem — `app.json` intentionally omits that field. Heroku reads `project.toml` at build
+time to determine the buildpack. No manual buildpack configuration is needed.
 
 **For any app that includes a Node.js build step** (Vue, React, or any frontend that runs `npm run build`):
 set `NPM_CONFIG_PRODUCTION=false` before pushing. Heroku sets `NODE_ENV=production` by default,

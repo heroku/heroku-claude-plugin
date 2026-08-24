@@ -111,10 +111,9 @@ class ScaffoldEvalCase(unittest.TestCase):
         self.assertEqual(actual, sorted(expected_slugs), f"addon mismatch: {actual} != {expected_slugs}")
         return data
 
-    def assert_app_json_buildpack(self, target_dir: Path, expected_slug: str) -> None:
+    def assert_no_app_json_buildpacks(self, target_dir: Path) -> None:
         data = json.loads((target_dir / "app.json").read_text(encoding="utf-8"))
-        buildpacks = [b.get("url") for b in data.get("buildpacks", [])]
-        self.assertIn(expected_slug, buildpacks, f"buildpack '{expected_slug}' not in {buildpacks}")
+        self.assertNotIn("buildpacks", data, "app.json should not declare buildpacks (use project.toml)")
 
     def assert_gitignore_has(self, target_dir: Path, *entries: str) -> None:
         gitignore = target_dir / ".gitignore"

@@ -32,7 +32,7 @@ class NodeStackEval(ScaffoldEvalCase):
         self.assertTrue((target / "server.js").exists())
         self.assertTrue((target / "package.json").exists())
         self.assert_procfile_web(target, "npm start")
-        self.assert_app_json_buildpack(target, "heroku/nodejs")
+        self.assert_no_app_json_buildpacks(target)
         self.assert_app_json_addons(target, [])
         self.assert_project_toml(target, "heroku/nodejs")
         self.assert_gitignore_has(target, "node_modules/")
@@ -89,7 +89,7 @@ class PythonFastAPIEval(ScaffoldEvalCase):
         self.assertTrue((target / ".python-version").exists())
         self.assert_procfile_web(target, "gunicorn")
         self.assert_procfile_web(target, "$PORT")
-        self.assert_app_json_buildpack(target, "heroku/python")
+        self.assert_no_app_json_buildpacks(target)
         self.assert_project_toml(target, "heroku/python")
         self.assert_gitignore_has(target, "__pycache__/", ".venv/")
 
@@ -152,7 +152,7 @@ class GoStackEval(ScaffoldEvalCase):
         self.assertTrue((target / "main.go").exists())
         self.assertTrue((target / "go.mod").exists())
         self.assert_procfile_web(target, "bin/hello-go")
-        self.assert_app_json_buildpack(target, "heroku/go")
+        self.assert_no_app_json_buildpacks(target)
         self.assert_app_json_addons(target, [])
         self.assert_project_toml(target, "heroku/go")
         self.assert_gitignore_has(target, "bin/")
@@ -260,7 +260,7 @@ class PythonDjangoEval(ScaffoldEvalCase):
         # Procfile release: python manage.py migrate
         self.assert_procfile_release(target, "python manage.py migrate")
         # app.json buildpack
-        self.assert_app_json_buildpack(target, "heroku/python")
+        self.assert_no_app_json_buildpacks(target)
         # app.json addons — Django default includes postgres
         self.assert_app_json_addons(target, ["heroku-postgresql"])
         # app.json env must include DJANGO_SECRET_KEY and DJANGO_DEBUG
@@ -313,7 +313,7 @@ class RailsStackEval(ScaffoldEvalCase):
         # Procfile release: bundle exec rails db:migrate
         self.assert_procfile_release(target, "bundle exec rails db:migrate")
         # app.json buildpack
-        self.assert_app_json_buildpack(target, "heroku/ruby")
+        self.assert_no_app_json_buildpacks(target)
         self.assert_project_toml(target, "heroku/ruby")
         # app.json addons — Rails default includes postgres
         self.assert_app_json_addons(target, ["heroku-postgresql"])

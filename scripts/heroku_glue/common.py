@@ -135,18 +135,20 @@ def merge_gitignore(target_dir: Path, lines: list[str]) -> None:
 def build_app_json(
     app_name: str,
     *,
-    buildpack: str,
     addons: list[str] | None = None,
     env: dict | None = None,
     formation: dict | None = None,
     description: str = "",
     stack: str = "heroku-24",
 ) -> dict:
-    """Assemble a deterministic app.json manifest."""
+    """Assemble a deterministic app.json manifest.
+
+    Buildpack specification is handled by project.toml (CNB on Cedar);
+    app.json does not declare buildpacks.
+    """
     data: dict = {"name": app_name, "stack": stack}
     if description:
         data["description"] = description
-    data["buildpacks"] = [{"url": buildpack}]
     if env:
         data["env"] = env
     if addons:
