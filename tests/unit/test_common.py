@@ -9,9 +9,10 @@ import pytest
 from heroku_glue.common import (
     BASE_GITIGNORE,
     ADDON_CONFIG_VARS,
+    CNB_BUILDER,
     ScaffoldError,
-    build_app_json,
     build_docker_compose,
+    build_project_toml,
     effective_addons,
     merge_gitignore,
     require_tools,
@@ -260,49 +261,42 @@ class TestMergeGitignore:
 
 
 # ---------------------------------------------------------------------------
-# build_app_json
+# build_project_toml
 # ---------------------------------------------------------------------------
 
-class TestBuildAppJson:
-    def test_required_fields(self):
-        result = build_app_json("my-app", buildpack="heroku/python")
-        assert result["name"] == "my-app"
-        assert result["buildpacks"] == [{"url": "heroku/python"}]
-        assert result["stack"] == "heroku-24"
+class TestBuildProjectToml:
+    def test_contains_schema_version(self):
+        result = build_project_toml("heroku/python")
+        assert 'schema-version = "0.2"' in result
 
-    def test_description_included_when_provided(self):
-        result = build_app_json("app", buildpack="heroku/go", description="A Go app")
-        assert result["description"] == "A Go app"
+    def test_contains_pinned_builder(self):
+        result = build_project_toml("heroku/python")
+        assert f'builder = "{CNB_BUILDER}"' in result
 
-    def test_description_omitted_when_empty(self):
-        result = build_app_json("app", buildpack="heroku/go", description="")
-        assert "description" not in result
+    def test_contains_language_buildpack(self):
+        result = build_project_toml("heroku/nodejs")
+        assert 'id = "heroku/nodejs"' in result
 
-    def test_addons_sorted(self):
-        result = build_app_json("app", buildpack="heroku/node", addons=["heroku-redis", "heroku-postgresql"])
-        assert result["addons"] == ["heroku-postgresql", "heroku-redis"]
+    def test_contains_procfile_buildpack(self):
+        result = build_project_toml("heroku/python")
+        assert 'id = "heroku/procfile"' in result
 
-    def test_addons_omitted_when_none(self):
-        result = build_app_json("app", buildpack="heroku/python")
-        assert "addons" not in result
+    def test_procfile_is_last_buildpack(self):
+        result = build_project_toml("heroku/go")
+        lang_pos = result.index('id = "heroku/go"')
+        procfile_pos = result.index('id = "heroku/procfile"')
+        assert lang_pos < procfile_pos
 
-    def test_env_included(self):
-        env = {"DATABASE_URL": {"description": "DB URL", "required": True}}
-        result = build_app_json("app", buildpack="heroku/python", env=env)
-        assert result["env"] == env
+    def test_deterministic_across_calls(self):
+        assert build_project_toml("heroku/ruby") == build_project_toml("heroku/ruby")
 
-    def test_env_omitted_when_none(self):
-        result = build_app_json("app", buildpack="heroku/python")
-        assert "env" not in result
+    def test_lf_newlines_only(self):
+        result = build_project_toml("heroku/python")
+        assert "\r\n" not in result
 
-    def test_formation_included(self):
-        formation = {"web": {"quantity": 1, "size": "basic"}}
-        result = build_app_json("app", buildpack="heroku/python", formation=formation)
-        assert result["formation"] == formation
-
-    def test_stack_override(self):
-        result = build_app_json("app", buildpack="heroku/python", stack="heroku-22")
-        assert result["stack"] == "heroku-22"
+    def test_trailing_newline(self):
+        result = build_project_toml("heroku/python")
+        assert result.endswith("\n")
 
 
 # ---------------------------------------------------------------------------
