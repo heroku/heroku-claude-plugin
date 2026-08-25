@@ -91,6 +91,7 @@ class PythonFastAPIEval(ScaffoldEvalCase):
         self.assert_scaffold_json(target, expected_addons=["heroku-postgresql"])
         reqs = (target / "requirements.txt").read_text()
         self.assertIn("psycopg2-binary", reqs)
+        self.assert_procfile_release(target, "alembic upgrade head")
 
     def test_determinism(self) -> None:
         self.assert_layer2_deterministic("det-fastapi", variant="fastapi")

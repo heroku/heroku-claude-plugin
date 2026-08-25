@@ -199,10 +199,10 @@ def _apply_fastapi(app_name: str, target_dir: Path, addons: list[str]) -> None:
         reqs += ["redis"]
     common.write_file(target_dir / "requirements.txt", "\n".join(sorted(reqs)))
 
-    common.write_file(
-        target_dir / "Procfile",
-        f"web: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT",
-    )
+    procfile = "web: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+    if "heroku-postgresql" in addons:
+        procfile += "\nrelease: alembic upgrade head"
+    common.write_file(target_dir / "Procfile", procfile)
 
 
 def _apply_flask(app_name: str, target_dir: Path, addons: list[str]) -> None:
