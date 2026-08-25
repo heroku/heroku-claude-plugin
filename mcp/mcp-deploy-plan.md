@@ -121,11 +121,14 @@ Output: { web_url, expires_at, build: { done, failed, log }, database }
 Poll every 10 seconds until `build.done === true`.
 If `build.failed === true`: surface the tail of `build.log` to the user and stop.
 
-**Open question — build_id:** `get_deployment_status` requires `build_id`, but no MCP tool
-returns it after a git push. Resolution options (needs live canary test):
-1. Parse `build_id` from `git push` stdout (Heroku embeds it in remote output lines)
-2. Make `build_id` optional — test whether the canary accepts omitting it
-3. Small CLI hybrid: `heroku builds --app <app_uuid> --json | jq -r '.[0].id'`
+**build_id:** `get_deployment_status` requires `build_id`, but no MCP tool returns it after
+a git push. Approach: parse it from `git push` stdout — Heroku's remote output includes a
+line containing the build ID. Grep for it during the push. Fallback if that fails: use the
+CLI hybrid `heroku builds --app <app_uuid> --json | jq -r '.[0].id'` immediately post-push.
+
+Note: the older `connector-mcp-tools.md` reference shows `get_deployment_status` taking only
+`{ app_uuid }` — that server diverged from mcp-portal. The canary requires `build_id`.
+The reference doc needs updating as part of this PR.
 
 ### Step 9 — Surface result
 `web_url` from `get_deployment_status` is the **claim portal URL**
@@ -149,7 +152,7 @@ app destroyed — normal terminal state).
 |---|---|
 | `skills/deploy-anonymous/SKILL.md` | Full rewrite — MCP flow above |
 | `mcp/stubs/*.json` | Replace all 6 stubs with correct 8 tool shapes |
-| `mcp/references/connector-mcp-tools.md` | Update to mcp-portal canary contracts |
+| `mcp/references/connector-mcp-tools.md` | Replace with mcp-portal canary contracts — the two servers have diverged (connector-mcp had `get_deployment_status { app_uuid }` only; canary requires `build_id`) |
 | `plugin.json` | Add `mcp_endpoint` config block |
 | `skills/check-deploy-status/SKILL.md` | Update tool names |
 
