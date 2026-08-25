@@ -1,8 +1,9 @@
 # MCP Anonymous Deploy Integration Plan
 
-**Status:** In progress  
+**Status:** In progress — canary validated, awaiting live provisioning  
 **Branch:** `feature/mcp-deploy` (off `feature/project-toml-cnb` → rebase to `main` after PR #20 merges)  
-**Canary endpoint:** `https://mcp-portal-canary.herokai.com/mcp?herokai=$HEROKAI_SECRET`
+**Canary endpoint:** `https://mcp-portal-canary.herokai.com/mcp?herokai=$HEROKAI_SECRET`  
+**Canary server:** `mcp-portal` v1.0.0 — 8 tools confirmed, provisioning path still stubbed
 
 ---
 
@@ -66,11 +67,13 @@ Poll every 5 seconds until `tos_status === "accepted"`. Surface progress to user
 ```
 Tool: create_preview_app
 Input: { conversation_id }
+       (optional: stack — defaults to "cnb", do not pass unless overriding)
 Output: { app_uuid, git_url, git_credentials: { token, ... }, web_url }
 ```
 - `app_uuid` is the Heroku app id — thread into all subsequent calls
 - `git_credentials` are short-lived — proceed to push promptly
 - `web_url` at this step is the raw `*.herokuapp.com` URL — **do not surface to user yet**
+- CNB is the server default — omitting `stack` gets us CNB on Cedar automatically
 
 ### Step 5 — Provision addons
 Read `addons` array from `.heroku-plugin-scaffold.json`. For each addon slug:
@@ -121,10 +124,25 @@ Output: { web_url, expires_at, build: { done, failed, log }, database }
 Poll every 10 seconds until `build.done === true`.
 If `build.failed === true`: surface the tail of `build.log` to the user and stop.
 
-**build_id:** `get_deployment_status` requires `build_id`, but no MCP tool returns it after
-a git push. Approach: parse it from `git push` stdout — Heroku's remote output includes a
-line containing the build ID. Grep for it during the push. Fallback if that fails: use the
-CLI hybrid `heroku builds --app <app_uuid> --json | jq -r '.[0].id'` immediately post-push.
+**build_id:** Both `get_deployment_status` and `get_build_output` require `build_id` (schema
+describes it as "returned by `update_deployment`" — stale docs from the old server; that tool
+no longer exists). No MCP tool returns it after a git push. Two options to test in order:
+
+**Option 1 — Parse from git push stdout (preferred)**
+Heroku's remote output during a push includes the build ID. Capture stderr/stdout from the
+push and grep for it. Exact format unknown until live provisioning ships — needs a real push
+to observe. Expected pattern: something like `remote: Build UUID: <uuid>` or embedded in a
+build URL line.
+
+**Option 2 — CLI fallback**
+If the grep approach fails or the format is unreliable:
+```bash
+heroku builds --app <app_uuid> --json | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])"
+```
+Run immediately after the push completes. Requires the Heroku CLI, which is already a
+dependency. Less fragile than string parsing.
+
+Validate which works once live provisioning is available on the canary.
 
 Note: the older `connector-mcp-tools.md` reference shows `get_deployment_status` taking only
 `{ app_uuid }` — that server diverged from mcp-portal. The canary requires `build_id`.
@@ -200,16 +218,28 @@ New stubs needed:
 
 ## Validation Plan
 
-Before implementing the skill rewrite, validate the canary directly:
+### Completed (2026-08-25)
 
-1. Set `HEROKAI_SECRET` locally (already done — not committed)
-2. Call `create_anonymous_session` against the canary — confirm response shape
-3. Accept ToS in browser, confirm `check_anonymous_session_state` transitions to `"accepted"`
-4. Call `create_preview_app` — confirm `app_uuid`, `git_url`, `git_credentials` are present
-5. Push a minimal Node app — observe build output
-6. Confirm `build_id` is or isn't required by `get_deployment_status` (resolves open question)
-7. Provision a `heroku-postgresql` addon — confirm service slug mapping works
-8. Confirm claim portal URL shape from `get_deployment_status.web_url`
+- ✅ `HEROKAI_SECRET` set in `~/.zshrc` — available in all terminal sessions
+- ✅ MCP handshake — server `mcp-portal` v1.0.0, protocol `2025-06-18`
+- ✅ 8 tools confirmed: `create_anonymous_session`, `check_anonymous_session_state`,
+  `create_preview_app`, `get_build_output`, `get_deployment_status`, `check_claim_status`,
+  `create_addon`, `get_addon_status`
+- ✅ `create_anonymous_session` response shape confirmed — `{ conversation_id, tos_url, tos_status }`
+- ✅ `create_preview_app` input schema confirmed — `stack` optional, defaults to `"cnb"`
+- ✅ `get_deployment_status` + `get_build_output` both require `{ app_uuid, build_id }`
+- ⚠️ Canary provisioning is fully stubbed — `git_url` is `git.invalid`, credentials fake.
+  ToS gate is in-memory only. All three session/provision tools return stub responses.
+
+### Pending (requires live provisioning on canary)
+
+- [ ] Accept ToS in browser — confirm `check_anonymous_session_state` → `"accepted"`
+- [ ] `create_preview_app` returns real `app_uuid`, `git_url`, live `git_credentials`
+- [ ] Push minimal Node app — observe full git push stdout, identify `build_id` format
+- [ ] Validate Option 1 (grep push stdout) vs Option 2 (CLI fallback) for `build_id`
+- [ ] Provision `heroku-postgresql` addon — confirm `"heroku-redis"` slug mapping works
+- [ ] Confirm `get_deployment_status.web_url` is claim portal URL, not raw app URL
+- [ ] Full end-to-end: session → app → push → build → claim portal URL surfaced
 
 ---
 
