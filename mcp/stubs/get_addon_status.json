@@ -1,0 +1,19 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Add-on postgresql-cylindrical-12345 is provisioned and ready."
+      }
+    ],
+    "structuredContent": {
+      "addon_id": "stub-addon-id-pg",
+      "name": "postgresql-cylindrical-12345",
+      "plan": "heroku-postgresql:essential-0",
+      "state": "provisioned",
+      "ready": true,
+      "config_vars": ["DATABASE_URL"]
+    }
+  },
+  "isError": false
+}
