@@ -1,0 +1,16 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "App a1b2c3d4-e5f6-7890-abcd-ef1234567890 has been claimed."
+      }
+    ],
+    "structuredContent": {
+      "app_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "claimed": true,
+      "expired": false
+    }
+  },
+  "isError": false
+}
