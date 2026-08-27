@@ -9,7 +9,7 @@ Every app scaffolded by this plugin must satisfy all items in this contract.
 | File | Required | Purpose |
 |------|----------|---------|
 | `Procfile` | Yes | Defines process types; `web:` must be present |
-| `project.toml` | Yes | CNB on Cedar: pins builder to `heroku/builder:24`, declares buildpack + `heroku/procfile` |
+| `project.toml` | Yes | CNB on Cedar: declares buildpack + `heroku/procfile`; omits builder (Kodon selects it) |
 | `.heroku-plugin-scaffold.json` | Yes | Scaffold summary: addons + secret env vars for deploy skill |
 | Buildpack marker | Yes | Language-specific (see below) |
 | `.gitignore` | Yes | Excludes secrets, build artifacts, local env files |

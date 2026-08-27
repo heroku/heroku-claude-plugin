@@ -63,7 +63,7 @@ Instead verify `.heroku-plugin-scaffold.json` exists and contains:
 
 - `project.toml` exists in the app root
 - Contains `schema-version = "0.2"`
-- Contains `builder = "heroku/builder:24"`
+- Does **not** contain a `builder =` line — Kodon selects the builder automatically
 - Contains the correct language buildpack id for the stack
 - Contains `id = "heroku/procfile"` as the last buildpack
 

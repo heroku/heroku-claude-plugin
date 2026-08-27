@@ -41,7 +41,6 @@ Ruby, Python, Java, Clojure, Node.js, Scala, Go, PHP, .NET
 schema-version = "0.2"
 
 [io.buildpacks]
-builder = "heroku/builder:24"
 
 [[io.buildpacks.group]]
 id = "heroku/nodejs"
