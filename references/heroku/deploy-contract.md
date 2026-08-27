@@ -45,7 +45,7 @@ web: gunicorn app:app --bind 0.0.0.0:5000
 
 ## Addon Wiring
 
-When addons are declared in `app.json`, the app must be written to use their config vars:
+When addons are declared in `.heroku-plugin-scaffold.json`, the app must be written to use their config vars:
 
 | Addon | Config var the app must read |
 |-------|------------------------------|
@@ -55,17 +55,23 @@ When addons are declared in `app.json`, the app must be written to use their con
 ## Secrets
 
 - Never commit `.env`, `config/master.key`, or any file containing secrets
-- Use `app.json` `env` with `"generator": "secret"` for generated secrets
-- Manual config vars: `heroku config:set KEY=value`
+- Generated secrets: declare names in `.heroku-plugin-scaffold.json` `secret_env_vars` array;
+  the `deploy-anonymous` skill generates values with `python3 -c 'import secrets; ...'` and
+  sets them via `heroku config:set --app <app_uuid>`
+- Manual config vars: `heroku config:set KEY=value --app <app_uuid>`
 
 ## Stack
 
-Default stack: `heroku-24` (Ubuntu 24.04). Specify in `app.json` as `"stack": "heroku-24"`.
+Default stack: CNB on Cedar. The mcp-portal `create_preview_app` tool sets `stack: "cnb"` at
+app creation time. `project.toml` declares the buildpack group — no `builder` field (Kodon
+selects the builder automatically).
 
 ## Anonymous Deploy Constraints
 
 During anonymous deployment (pre-claim):
-- Addons are provisioned (`heroku-postgresql`, `heroku-redis` supported)
-- `public_routing` is set to `false` — app URL is not publicly accessible
-- App is transferred to user account on claim
-- After claim: `public_routing` can be set to `true`
+- App is created by the mcp-portal server using its platform token — not the user's Heroku account
+- Addons are provisioned via `create_addon` MCP tool (`heroku-postgresql`, `heroku-redis` supported)
+- App URL visible to the user is the claim portal URL (`https://claim-canary.heroku.com/preview/<app_uuid>`)
+- Claim window: 60 minutes from app creation (default)
+- App is transferred to user account when they claim it via the portal
+- After claim: app moves to user's Heroku account; addons become billable

@@ -21,8 +21,9 @@ Build me a Python REST API and deploy it to Heroku
 Before any work starts, the plugin checks your environment and walks you through anything that's missing:
 
 - **git** — required. Install instructions surfaced if not found.
-- **Heroku CLI + login** — required. Install and login instructions surfaced if not found.
 - **Docker Desktop** — optional. The plugin explains what it enables and offers to install it. You can skip it and still deploy to Heroku.
+
+The deploy path uses the Heroku mcp-portal MCP server — no Heroku CLI login required for app creation or deployment. The CLI is only used when the scaffolded app needs generated secrets (e.g. `DJANGO_SECRET_KEY`).
 
 Once the environment is ready, the plugin scaffolds the code, creates the Heroku app, provisions any addons, and deploys — all from that one prompt.
 
@@ -61,15 +62,18 @@ This section covers how to exercise the plugin against a real Heroku account.
 ### Setup
 
 1. Clone this repo and navigate to it
-2. Create a fresh directory for each test run:
+2. Ensure `HEROKAI_SECRET` is set in your environment (contact the mcp-portal team for access)
+3. Create a fresh directory for each test run:
    ```bash
    mkdir ~/heroku-plugin-tests/run-01
    cd ~/heroku-plugin-tests/run-01
    ```
-3. Launch Claude with the plugin:
+4. Launch Claude with the plugin:
    ```bash
    claude --plugin-dir /path/to/heroku-plugin
    ```
+
+> **Note:** Live end-to-end testing requires the mcp-portal canary provisioning path to be active. Check `mcp/mcp-portal-readiness.md` for current server-side status before testing.
 
 ### Test Scenarios
 
@@ -134,7 +138,7 @@ claude --plugin-dir /path/to/heroku-plugin
 For each scenario, assess:
 
 - **Scaffold quality** — does the generated code follow the language's best practices? Are linting configs present?
-- **Deploy success** — did `heroku create`, addon provisioning, and `git push` complete without manual intervention?
+- **Deploy success** — did the MCP session, addon provisioning, and git push complete without manual intervention?
 - **Error handling** — if something failed, did the plugin diagnose it and self-heal (up to 3 attempts)?
 - **Output clarity** — were the URLs, next steps, and status messages easy to understand?
 - **Teardown** — did cleanup remove the app and clear session state correctly?
