@@ -99,7 +99,7 @@ class ScaffoldEvalCase(unittest.TestCase):
         self.assertTrue(path.exists(), "project.toml missing")
         content = path.read_text(encoding="utf-8")
         self.assertIn('schema-version = "0.2"', content, "project.toml missing schema-version")
-        self.assertIn('builder = "heroku/builder:24"', content, "project.toml missing pinned builder")
+        self.assertNotIn("builder =", content, "project.toml must not pin the builder — Kodon selects it")
         self.assertIn(f'id = "{expected_buildpack}"', content, f"project.toml missing buildpack {expected_buildpack}")
         self.assertIn('id = "heroku/procfile"', content, "project.toml missing heroku/procfile")
 

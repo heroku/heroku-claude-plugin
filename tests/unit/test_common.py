@@ -9,7 +9,6 @@ import pytest
 from heroku_glue.common import (
     BASE_GITIGNORE,
     ADDON_CONFIG_VARS,
-    CNB_BUILDER,
     ScaffoldError,
     build_docker_compose,
     build_project_toml,
@@ -269,9 +268,9 @@ class TestBuildProjectToml:
         result = build_project_toml("heroku/python")
         assert 'schema-version = "0.2"' in result
 
-    def test_contains_pinned_builder(self):
+    def test_omits_builder(self):
         result = build_project_toml("heroku/python")
-        assert f'builder = "{CNB_BUILDER}"' in result
+        assert "builder" not in result
 
     def test_contains_language_buildpack(self):
         result = build_project_toml("heroku/nodejs")
