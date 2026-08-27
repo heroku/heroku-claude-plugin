@@ -13,7 +13,7 @@ jobs:
     name: Unit Tests (90% coverage)
     runs-on: pub-hk-ubuntu-24.04-ip
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -27,7 +27,7 @@ jobs:
     name: Generator Evals (Layer 2 Determinism)
     runs-on: pub-hk-ubuntu-24.04-ip
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -58,7 +58,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -73,7 +73,7 @@ jobs:
     env:
       HEROKU_MCP_STUB: "1"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
