@@ -29,8 +29,6 @@ Ruby, Python, Java, Clojure, Node.js, Scala, Go, PHP, .NET
 ## Cloud Native Buildpacks (CNB)
 
 - OCI image builds configured via `project.toml` (not `app.json`)
-- Support arm64; auto-detect on every deploy unless buildpacks pinned in `project.toml`
-- Builders: `heroku/builder:24`, `heroku/builder:26`
 - Available on Fir (GA) and Cedar (not yet GA)
 - This plugin targets CNB on Cedar: `project.toml` is generated for every scaffolded app
 
