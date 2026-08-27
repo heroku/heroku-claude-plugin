@@ -129,32 +129,8 @@ def merge_gitignore(target_dir: Path, lines: list[str]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# app.json + docker-compose builders
+# docker-compose builder
 # ---------------------------------------------------------------------------
-
-def build_app_json(
-    app_name: str,
-    *,
-    buildpack: str,
-    addons: list[str] | None = None,
-    env: dict | None = None,
-    formation: dict | None = None,
-    description: str = "",
-    stack: str = "heroku-24",
-) -> dict:
-    """Assemble a deterministic app.json manifest."""
-    data: dict = {"name": app_name, "stack": stack}
-    if description:
-        data["description"] = description
-    data["buildpacks"] = [{"url": buildpack}]
-    if env:
-        data["env"] = env
-    if addons:
-        data["addons"] = sorted(addons)
-    if formation:
-        data["formation"] = formation
-    return data
-
 
 def build_docker_compose(app_name: str, addons: list[str]) -> dict:
     """Build a deterministic docker-compose.yml mirroring Heroku addon config vars."""
@@ -203,6 +179,31 @@ def write_docker_compose(target_dir: Path, app_name: str, addons: list[str]) -> 
 
 
 # ---------------------------------------------------------------------------
+# project.toml builder (CNB on Cedar)
+# ---------------------------------------------------------------------------
+
+def build_project_toml(buildpack_id: str) -> str:
+    """Render a deterministic project.toml for CNB on Cedar.
+
+    Omits the builder field — Kodon selects the default builder automatically.
+    Declares the language buildpack followed by heroku/procfile (required when
+    a Procfile is present).
+    """
+    return (
+        '[_]\n'
+        'schema-version = "0.2"\n'
+        '\n'
+        '[io.buildpacks]\n'
+        '\n'
+        '[[io.buildpacks.group]]\n'
+        f'id = "{buildpack_id}"\n'
+        '\n'
+        '[[io.buildpacks.group]]\n'
+        'id = "heroku/procfile"\n'
+    )
+
+
+# ---------------------------------------------------------------------------
 # Subprocess + toolchain helpers
 # ---------------------------------------------------------------------------
 
@@ -245,4 +246,6 @@ BASE_GITIGNORE = [
     ".DS_Store",
     "*.swp",
     "*.swo",
+    ".heroku-plugin-scaffold.json",
+    ".heroku-plugin-session.json",
 ]

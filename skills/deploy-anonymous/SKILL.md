@@ -27,7 +27,8 @@ If any fail, surface the preflight error and stop.
 
 Check that the target directory exists and contains:
 - `Procfile` with `web:` process
-- `app.json`
+- `project.toml` (CNB buildpack specification — required)
+- `.heroku-plugin-scaffold.json` (scaffold summary — source of truth for addons and secret env vars)
 - `.git/` directory (git repo initialized)
 
 If missing, suggest running `/heroku-plugin:scaffold-app` first.
@@ -51,45 +52,28 @@ Creating ⬢ <app-name>... done
 https://<app-name>.herokuapp.com/ | https://git.heroku.com/<app-name>.git
 ```
 
-## Step 5 — Apply app.json configuration
+## Step 5 — Apply configuration
 
-`heroku create --no-remote` does **not** process `app.json` — generators, buildpacks, and env
-entries are only applied during Heroku Button / `heroku create --manifest` deploys. Apply them
-manually in this order:
+Read `.heroku-plugin-scaffold.json` in the target directory. It contains:
+- `addons` — list of canonical addon slugs to provision
+- `secret_env_vars` — list of env var names that need generated secrets before push
 
-### 5a — Set env vars from generators
+### 5a — Set generated secrets
 
-Read `app.json` and look for env entries with `"generator": "secret"`. For each one, generate
-and set the value before pushing:
+For each name in `secret_env_vars`, generate and set the value before pushing:
 
 ```bash
-# For each env var with "generator": "secret" in app.json:
 heroku config:set <KEY>=$(python3 -c 'import secrets; print(secrets.token_hex(32))') --app <app-name>
 ```
 
-Common examples: `DJANGO_SECRET_KEY`, `SECRET_KEY_BASE` (Rails), `SECRET_KEY` (Flask).
+Common examples: `DJANGO_SECRET_KEY` (Django), `RAILS_MASTER_KEY` (Rails).
 
-### 5b — Apply buildpacks
+### 5b — Buildpacks
 
-Read `app.json` and look for the `buildpacks` array. Apply each in order:
-
-```bash
-# For each buildpack in app.json buildpacks array (in order):
-heroku buildpacks:add --index <N> <url> --app <app-name>
-```
-
-Example — Node.js app:
-```bash
-heroku buildpacks:add --index 1 heroku/nodejs --app <app-name>
-```
-
-Example — Vue.js + Python (multi-buildpack):
-```bash
-heroku buildpacks:add --index 1 heroku/nodejs --app <app-name>
-heroku buildpacks:add --index 2 heroku/python --app <app-name>
-```
-
-If `app.json` has no `buildpacks` array, Heroku will auto-detect. Skip this step.
+All scaffolded apps include a `project.toml` that specifies the buildpack for CNB on Cedar.
+**Do not call `heroku buildpacks:add`** and do not flag a missing `buildpacks` key in `app.json`
+as a problem — `app.json` intentionally omits that field. Heroku reads `project.toml` at build
+time to determine the buildpack. No manual buildpack configuration is needed.
 
 **For any app that includes a Node.js build step** (Vue, React, or any frontend that runs `npm run build`):
 set `NPM_CONFIG_PRODUCTION=false` before pushing. Heroku sets `NODE_ENV=production` by default,
@@ -104,7 +88,7 @@ This is safe — it only affects the build phase, not the runtime.
 
 ### 5c — Provision addons
 
-For each addon in the `addons` array, provision it:
+For each addon in the `addons` array from `.heroku-plugin-scaffold.json`, provision it:
 
 ```bash
 # heroku-postgresql

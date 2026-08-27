@@ -36,16 +36,17 @@ release: bundle exec rails db:migrate
 
 ## Buildpack
 
-Auto-detected from `Gemfile`. Explicit: `heroku/ruby`
+Specified in `project.toml` (CNB on Cedar) — do not use `app.json` `buildpacks` array.
 
-Add `heroku/nodejs` if using asset pipeline (Webpacker/Sprockets + npm):
-```json
-"buildpacks": [
-  { "url": "heroku/nodejs" },
-  { "url": "heroku/ruby" }
-]
+```toml
+[[io.buildpacks.group]]
+id = "heroku/ruby"
+
+[[io.buildpacks.group]]
+id = "heroku/procfile"
 ```
-Primary language buildpack last.
+
+Primary language buildpack last, `heroku/procfile` always last.
 
 ## Default Addons
 

@@ -88,6 +88,7 @@ def main() -> int:
                 "display_name": module.DISPLAY_NAME,
                 "target_dir": str(target_dir.resolve()),
                 "addons": canonical_addons,
+                "secret_env_vars": module.secret_env_vars(options),
                 "variant": args.variant,
                 "with_docker": args.with_docker,
             }
@@ -115,9 +116,13 @@ def main() -> int:
             "app_name": app_name,
             "target_dir": str(target_dir.resolve()),
             "addons": canonical_addons,
+            "secret_env_vars": module.secret_env_vars(options),
             "variant": args.variant,
             "with_docker": args.with_docker,
         }
+        # Write scaffold file without target_dir so it's deterministic across runs
+        scaffold_file = {k: v for k, v in summary.items() if k != "target_dir"}
+        common.write_json(target_dir / ".heroku-plugin-scaffold.json", scaffold_file)
         print(json.dumps(summary))
         return 0
 

@@ -24,25 +24,32 @@ Ruby, Python, Java, Clojure, Node.js, Scala, Go, PHP, .NET
 
 - Auto-detected from marker files (`package.json`, `go.mod`, `Gemfile`, `requirements.txt`, etc.)
 - Once set on an app, locked for future deploys unless changed
-- Specified in `app.json` `buildpacks` array
+- **Not used by this plugin** — this plugin targets CNB on Cedar via `project.toml`
 
-## Cloud Native Buildpacks (Fir)
+## Cloud Native Buildpacks (CNB)
 
 - OCI image builds configured via `project.toml` (not `app.json`)
-- Support arm64; auto-detect on every deploy
-- Builders: `heroku/builder:24`, `heroku/builder:26`
+- Available on Fir (GA) and Cedar (not yet GA)
+- This plugin targets CNB on Cedar: `project.toml` is generated for every scaffolded app
 
-## Specifying in app.json
+## Specifying in project.toml (CNB)
 
-```json
-{
-  "buildpacks": [
-    { "url": "heroku/python" }
-  ]
-}
+```toml
+[_]
+schema-version = "0.2"
+
+[io.buildpacks]
+
+[[io.buildpacks.group]]
+id = "heroku/nodejs"
+
+[[io.buildpacks.group]]
+id = "heroku/procfile"
 ```
 
-Use `heroku/<language>` shorthand for official buildpacks. For multiple buildpacks, order matters — primary language buildpack last.
+Use `heroku/<language>` shorthand for official buildpacks. Always include `heroku/procfile` last
+when a `Procfile` is present. Do not specify buildpacks in `app.json` — `project.toml` is
+authoritative for CNB builds.
 
 ## Auto-Detection Marker Files
 

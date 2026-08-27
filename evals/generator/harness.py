@@ -16,10 +16,10 @@ SCAFFOLD = REPO_ROOT / "scripts" / "scaffold.py"
 
 # Layer 2 files asserted for byte-identity across runs
 LAYER2_FILES = {
-    "node":   ["Procfile", "app.json", "eslint.config.js", ".prettierrc", ".pre-commit-config.yaml"],
-    "python": ["Procfile", "app.json", "requirements.txt", ".python-version", ".pre-commit-config.yaml", "pyproject.toml"],
-    "rails":  ["Procfile", "app.json", ".rubocop.yml", ".pre-commit-config.yaml"],
-    "go":     ["Procfile", "app.json", "main.go", "go.mod", ".golangci.yml", ".pre-commit-config.yaml"],
+    "node":   ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "eslint.config.js", ".prettierrc", ".pre-commit-config.yaml"],
+    "python": ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "requirements.txt", ".python-version", ".pre-commit-config.yaml", "pyproject.toml"],
+    "rails":  ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", ".rubocop.yml", ".pre-commit-config.yaml"],
+    "go":     ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "main.go", "go.mod", ".golangci.yml", ".pre-commit-config.yaml"],
 }
 
 LAYER2_DOCKER_FILES = ["Dockerfile", "docker-compose.yml"]
@@ -94,18 +94,26 @@ class ScaffoldEvalCase(unittest.TestCase):
         self.assertTrue(release_lines, "No release: line found")
         self.assertIn(expected_substr, release_lines[0])
 
-    def assert_app_json_addons(self, target_dir: Path, expected_slugs: list[str]) -> dict:
-        app_json_path = target_dir / "app.json"
-        self.assertTrue(app_json_path.exists(), "app.json missing")
-        data = json.loads(app_json_path.read_text(encoding="utf-8"))
-        actual = sorted(data.get("addons", []))
-        self.assertEqual(actual, sorted(expected_slugs), f"addon mismatch: {actual} != {expected_slugs}")
-        return data
+    def assert_project_toml(self, target_dir: Path, expected_buildpack: str) -> None:
+        path = target_dir / "project.toml"
+        self.assertTrue(path.exists(), "project.toml missing")
+        content = path.read_text(encoding="utf-8")
+        self.assertIn('schema-version = "0.2"', content, "project.toml missing schema-version")
+        self.assertNotIn("builder =", content, "project.toml must not pin the builder — Kodon selects it")
+        self.assertIn(f'id = "{expected_buildpack}"', content, f"project.toml missing buildpack {expected_buildpack}")
+        self.assertIn('id = "heroku/procfile"', content, "project.toml missing heroku/procfile")
 
-    def assert_app_json_buildpack(self, target_dir: Path, expected_slug: str) -> None:
-        data = json.loads((target_dir / "app.json").read_text(encoding="utf-8"))
-        buildpacks = [b.get("url") for b in data.get("buildpacks", [])]
-        self.assertIn(expected_slug, buildpacks, f"buildpack '{expected_slug}' not in {buildpacks}")
+    def assert_scaffold_json(self, target_dir: Path, expected_addons: list[str] | None = None) -> dict:
+        path = target_dir / ".heroku-plugin-scaffold.json"
+        self.assertTrue(path.exists(), ".heroku-plugin-scaffold.json missing")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data.get("status"), "ok")
+        self.assertIn("addons", data)
+        self.assertIn("secret_env_vars", data)
+        self.assertNotIn("app.json", [f.name for f in target_dir.iterdir()], "app.json should not exist")
+        if expected_addons is not None:
+            self.assertEqual(data["addons"], sorted(expected_addons))
+        return data
 
     def assert_gitignore_has(self, target_dir: Path, *entries: str) -> None:
         gitignore = target_dir / ".gitignore"

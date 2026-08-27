@@ -116,26 +116,16 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
     common.write_file(target_dir / ".prettierrc", _PRETTIERRC)
     common.write_file(target_dir / ".pre-commit-config.yaml", _PRECOMMIT_CONFIG)
 
-    env = {}
-    if "heroku-postgresql" in addons:
-        env["DATABASE_URL"] = {"description": "Heroku Postgres connection string", "required": True}
-    if "heroku-redis" in addons:
-        env["REDIS_URL"] = {"description": "Heroku Redis connection string", "required": True}
-
-    app_json = common.build_app_json(
-        app_name,
-        buildpack="heroku/nodejs",
-        addons=addons,
-        env=env if env else None,
-        formation={"web": {"quantity": 1, "size": "basic"}},
-    )
-    common.write_json(target_dir / "app.json", app_json)
-
+    common.write_file(target_dir / "project.toml", common.build_project_toml("heroku/nodejs"))
     common.merge_gitignore(target_dir, common.BASE_GITIGNORE + gitignore_lines(options))
 
     if options.get("with_docker"):
         _write_dockerfile(target_dir)
         common.write_docker_compose(target_dir, app_name, addons)
+
+
+def secret_env_vars(options: dict) -> list[str]:
+    return []
 
 
 def gitignore_lines(options: dict) -> list[str]:
