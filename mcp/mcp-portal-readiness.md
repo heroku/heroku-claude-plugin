@@ -4,8 +4,37 @@
 integration in the plugin. Pass to the mcp-portal team; implement in order so each item
 can be tested independently as it lands on canary.
 
-**Canary endpoint:** `https://mcp-portal-canary.herokai.com/mcp?herokai=$HEROKAI_SECRET`  
-**Last validated:** 2026-08-25 — all session/provisioning tools still stubbed
+**Active endpoint:** `https://mcp-portal.staging.herokudev.com/mcp?herokai=${HEROKAI_SECRET}` (per `.mcp.json`)  
+**Last validated:** 2026-08-28 — live staging probe; see below
+
+---
+
+## 2026-08-28 live staging probe
+
+The plugin now points at **staging** (not canary), and staging provisions for real — items 1–4
+below are effectively **done**. Per-tool results from a real end-to-end run (session → ToS →
+`create_preview_app` → git push → CNB build succeeded, app deployed):
+
+| Tool | Result |
+|---|---|
+| `create_anonymous_session` | ✅ real session + ToS URL |
+| `check_anonymous_session_state` | ✅ pending → accepted (browser callback works) |
+| `create_preview_app` | ✅ real `app_uuid`, `git_url` (`git.staging.herokudev.com`), real RS256 JWT creds (~5-min git, ~1-hr mcp) |
+| git push → CNB build | ✅ real build ran and deployed |
+| `check_claim_status` | ✅ works — but returned `claimed: true` with no claim ever performed (**staging auto-claims? confirm semantics**) |
+| `get_deployment_status` | ❌ "Could not read the deployment status … try again shortly" — persistent (~65s, with and without `build_id`) |
+| `get_build_output` | ❌ "Could not read the build status … try again shortly" — persistent |
+| `get_preview_app_git_credentials` | ❌ "could not reach the deploy service … needs operator attention" (not retryable) |
+| `create_addon`, `get_addon_status` | ⏭️ not exercised (no-addon happy path) |
+
+**Open items for the mcp-portal team:**
+1. `get_deployment_status` + `get_build_output` are **down on staging** — this is the highest-priority blocker: `get_deployment_status` is the only source of the claim-portal URL handed to the user.
+2. `get_preview_app_git_credentials` fails at the service layer (down on staging). Its purpose (confirmed with the team) is minting fresh push creds for an **already-provisioned** preview app — i.e. the edit → redeploy loop, since the `create_preview_app` creds expire ~5 min after issuance. It is **not** needed for the first deploy and has no caller in the plugin yet (a redeploy skill would own it). Its `app_id` arg shape stays unverified until the service is back up.
+3. `check_claim_status` returned `claimed: true` for an unclaimed app — confirm what "claimed" means on staging.
+
+**`build_id` format — now confirmed (answers the item 4 question below):** the id is **not** emitted
+as `remote: Build UUID: <uuid>`. It appears in the `*** Images (...)` block as
+`builds.heroku.com/<app_uuid>/builds:<uuid>` — parse the UUID after `builds:`.
 
 ---
 
@@ -112,12 +141,15 @@ deployed app and the claim portal wired to canary.
 
 ## Summary
 
-| # | Feature | Blocks | Completed | Current status |
+Status as of the 2026-08-28 staging probe (was all-stubbed on 2026-08-25 canary):
+
+| # | Feature | Blocks | Completed | Current status (staging) |
 |---|---|---|---|---|
-| 1 | Persistent session store | Everything | ☐ | In-memory only |
-| 2 | ToS browser callback | Items 3–7 | ☐ | Not wired |
-| 3 | Real app provisioning (`create_preview_app`) | Items 4–7 | ☐ | Stubbed (`git.invalid`) |
-| 4 | Git credentials (real JWT) + `build_id` format | Items 5–7 | ☐ | Stubbed |
-| 5 | Build polling (`get_build_output`, `get_deployment_status`) | Item 7 | ☐ | Implemented, needs real data |
-| 6 | Addon provisioning (`create_addon`, `get_addon_status`) | — | ☐ | Implemented, needs real `app_uuid` |
-| 7 | Claim polling (`check_claim_status`) | — | ☐ | Implemented, needs real `app_uuid` |
+| 1 | Persistent session store | Everything | ☑ | Works — state survives across requests |
+| 2 | ToS browser callback | Items 3–7 | ☑ | Works — acceptance flips to `accepted` |
+| 3 | Real app provisioning (`create_preview_app`) | Items 4–7 | ☑ | Real app + `git_url` (no longer `git.invalid`) |
+| 4 | Git credentials (real JWT) + `build_id` format | Items 5–7 | ☑ | Real JWT creds; `build_id` format confirmed (`builds:<uuid>`) |
+| 5 | Build polling (`get_build_output`, `get_deployment_status`) | Item 7 | ☐ | **DOWN** — "try again shortly" (blocks claim URL) |
+| 6 | Addon provisioning (`create_addon`, `get_addon_status`) | — | ☐ | Not yet exercised live |
+| 7 | Claim polling (`check_claim_status`) | — | ☑ | Works — but `claimed:true` semantics need confirming |
+| 8 | Redeploy git creds (`get_preview_app_git_credentials`) | future redeploy flow | ☐ | **DOWN** — deploy service unreachable; purpose = fresh creds for pushing revisions to a live preview app (not first-deploy) |

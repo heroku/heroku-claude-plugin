@@ -109,7 +109,7 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 
 The deploy path calls the mcp-portal MCP server (`deploy_mode: "mcp"`). The server URL and auth live in `.mcp.json` at the repo root, which Claude Code reads to connect — the endpoint is not duplicated in `plugin.json`. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed), interpolated into the `.mcp.json` URL as `${HEROKAI_SECRET}`.
 
-The 8 mcp-portal tools used by the deploy flow:
+The 8 mcp-portal tools used by the (first-)deploy flow:
 
 | Tool | Purpose |
 |------|---------|
@@ -122,9 +122,17 @@ The 8 mcp-portal tools used by the deploy flow:
 | `get_build_output` | Tail build log |
 | `check_claim_status` | Poll until app is claimed or expired |
 
-**Current status:** Canary is live and all 8 tools are confirmed. Provisioning path is still stubbed server-side (`git_url` returns `git.invalid`, credentials are fake). A live end-to-end test is blocked until the mcp-portal server team ships real provisioning. See `mcp/mcp-portal-readiness.md` for the ordered list of server-side work items.
+A 9th server tool, `get_preview_app_git_credentials`, mints fresh git push creds for an **already-provisioned** preview app — its purpose is the edit → redeploy loop (pushing a revision after the ~5-min `create_preview_app` creds have expired). It is **not** part of the first-deploy flow above and has no caller yet; it belongs to a future redeploy skill.
 
-For local testing without the canary: set `HEROKU_MCP_STUB=1` — stubs in `mcp/stubs/` conform to the mcp-portal tool result spec.
+**Current status:** The plugin talks to the **staging** server (`.mcp.json`), and staging provisions for real — the old "stubbed server-side / `git_url` returns `git.invalid`" note (from the canary era) no longer holds. Verified live on 2026-08-28:
+
+- `create_anonymous_session`, `check_anonymous_session_state`, `create_preview_app` — confirmed end-to-end. `create_preview_app` returns a real `git_url` (`https://git.staging.herokudev.com/<app>.git`) and real RS256 JWT `git_credentials` (~5-min lifetime) + `mcp_credentials` (~1-hr lifetime). Response shape matches this table and the `deploy-anonymous` Step 5 doc.
+- `get_preview_app_git_credentials` — **not operational on staging**: returns "could not reach the deploy service … needs operator attention." Because it fails at the service layer, the `app_id` argument (assumed to be `app_uuid`) is **still unverified**. Under investigation with the mcp-portal team; do not rely on the Step 8 re-mint path until it's confirmed working.
+- `create_addon`, `get_addon_status`, `get_deployment_status`, `get_build_output`, `check_claim_status` — not yet exercised live (require a real git push first).
+
+See `mcp/mcp-portal-readiness.md` for remaining server-side work items.
+
+For local testing without the live server: set `HEROKU_MCP_STUB=1` — stubs in `mcp/stubs/` conform to the mcp-portal tool result spec.
 
 ### Hooks
 
