@@ -107,7 +107,7 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 
 ### MCP Deploy Path
 
-The deploy path calls the mcp-portal MCP server (`deploy_mode: "mcp"`). The canary endpoint is `https://mcp-portal-canary.herokai.com/mcp`. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed).
+The deploy path calls the mcp-portal MCP server (`deploy_mode: "mcp"`). The server URL and auth live in `.mcp.json` at the repo root, which Claude Code reads to connect — the endpoint is not duplicated in `plugin.json`. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed), interpolated into the `.mcp.json` URL as `${HEROKAI_SECRET}`.
 
 The 8 mcp-portal tools used by the deploy flow:
 
@@ -192,8 +192,6 @@ Addons post-claim: billable to user's account
 "policy": {
   "reference_staleness_days": 30,
   "deploy_mode": "mcp",
-  "mcp_endpoint": "https://mcp-portal-canary.herokai.com/mcp",
-  "mcp_auth_env_var": "HEROKAI_SECRET",
   "mcp_stub": false,
   "supported_stacks": ["node", "python", "rails", "go"],
   "supported_addons": ["heroku-postgresql", "heroku-redis"],
@@ -201,7 +199,7 @@ Addons post-claim: billable to user's account
 }
 ```
 
-`HEROKAI_SECRET` must be set in the environment (`~/.zshrc`) — it is never committed to the repo.
+The mcp-portal server URL and auth are defined in `.mcp.json` (repo root), not here. `HEROKAI_SECRET` must be set in the environment (`~/.zshrc`) — it is never committed to the repo; `.mcp.json` references it as `${HEROKAI_SECRET}`.
 
 ### Eval Strategy
 
