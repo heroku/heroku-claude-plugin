@@ -77,44 +77,23 @@ Output: { app_uuid, web_url, git_url, git_credentials: { token, expires_at }, mc
 - Store `app_uuid` — required for all remaining MCP calls
 - Store `git_url` and `git_credentials.token` — used in Step 8
 - Do **not** surface `web_url` from this step — it is the raw `*.herokuapp.com` address, not the link to give the user
-- `git_credentials` expire quickly (~5 min) — proceed through Steps 6 and 7 without delay
+- `git_credentials` expire quickly (~5 min) — the push (Step 8) must land inside that window. Everything between here and the push is kept to *fast* calls only (Steps 6–7); the *slow* work (addon readiness, build) is deferred to Step 9, after the push, so it never eats the credential window
 
-## Step 6 — Provision addons
+> **Steps 6–9 ordering — the credential clock.** The push (Step 8) is the critical path: it
+> must happen before the Step 5 token lapses (~5 min). So Steps 6 and 7 are *fast* calls only —
+> set secrets, then fire addon creation without waiting. The *slow* work (addon readiness + the
+> build) is deferred to Step 9 and polled concurrently, **after** the push. Never let addon
+> readiness polling block the push.
 
-Read the `addons` array from `.heroku-plugin-scaffold.json`. If empty, skip this step.
-
-For each addon slug, provision and wait for readiness:
-
-```
-Tool: create_addon
-Input: { app_uuid, service }
-Output: { addon_id, name, plan, state, config_vars }
-```
-
-Then poll until ready:
-
-```
-Tool: get_addon_status
-Input: { app_uuid, addon_id }
-Output: { ready: boolean, config_vars }
-```
-
-Poll every 5 seconds until `ready: true`. Show progress to the user.
-
-**Service slug mapping** (pass exactly these values as `service`):
-| `.heroku-plugin-scaffold.json` slug | MCP `service` value |
-|---|---|
-| `heroku-postgresql` | `heroku-postgresql` |
-| `heroku-redis` | `heroku-redis` |
-
-If `create_addon` returns `isError: true`, surface the error and ask the user whether to
-continue without the addon or stop.
-
-## Step 7 — Set secrets [CLI — hybrid step]
+## Step 6 — Set secrets [CLI — hybrid step]
 
 Read `secret_env_vars` from `.heroku-plugin-scaffold.json`. If empty, skip this step.
 
-For each name, generate and set a secret before pushing:
+Set these **before** the push — the build and release phases may consume them (e.g. Rails
+`assets:precompile` needs `RAILS_MASTER_KEY`/`SECRET_KEY_BASE`; Django `collectstatic` needs
+`DJANGO_SECRET_KEY`). Each is a fast call, so it costs only seconds against the credential window.
+
+For each name, generate and set a secret:
 
 ```bash
 heroku config:set <NAME>=$(python3 -c 'import secrets; print(secrets.token_hex(32))') --app <app_uuid>
@@ -125,9 +104,38 @@ active `heroku login` session.
 
 Common values: `DJANGO_SECRET_KEY` (Django), `RAILS_MASTER_KEY` (Rails).
 
+## Step 7 — Kick off addon provisioning (do not wait)
+
+Read the `addons` array from `.heroku-plugin-scaffold.json`. If empty, skip this step.
+
+For each addon slug, **fire** the provision — call `create_addon` and move straight on. Do
+**not** poll `get_addon_status` here; readiness is polled in Step 9, concurrently with the
+build. `create_addon` returns quickly and only *starts* provisioning, so firing it before the
+push lets provisioning overlap the build — maximizing the chance the addon is ready before any
+release phase runs.
+
+```
+Tool: create_addon
+Input: { app_uuid, service }
+Output: { addon_id, name, plan, state, config_vars }
+```
+
+Store each `addon_id` — Step 9 polls it for readiness.
+
+**Service slug mapping** (pass exactly these values as `service`):
+| `.heroku-plugin-scaffold.json` slug | MCP `service` value |
+|---|---|
+| `heroku-postgresql` | `heroku-postgresql` |
+| `heroku-redis` | `heroku-redis` |
+
+If `create_addon` returns `isError: true`, surface the error and ask the user whether to
+continue without the addon or stop.
+
 ## Step 8 — Push source
 
-The git push triggers the Heroku CNB build. Use `git_credentials.token` for HTTP basic auth:
+Push **immediately** after Step 7 — this is the critical path against the credential clock; do
+not wait on addon readiness (that is Step 9). The git push triggers the Heroku CNB build. Use
+`git_credentials.token` for HTTP basic auth:
 
 ```bash
 cd <target_dir>
@@ -163,7 +171,11 @@ future redeploy flow, not this first-deploy skill.)
 heroku builds --app <app_uuid> --json | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])"
 ```
 
-## Step 9 — Monitor build
+## Step 9 — Monitor build and finish addons (concurrent)
+
+Two things complete after the push and are independent — poll both, then **join** before Step 10.
+
+**Track A — build:**
 
 ```
 Tool: get_deployment_status
@@ -180,8 +192,25 @@ If `build.failed === true`:
 - Surface the tail of `build.log` (last 30 lines) to the user
 - Stop — do not proceed to Step 10
 - Suggest checking the Procfile, requirements, or build errors shown
+- If the failure is a **release-phase** error referencing a missing `DATABASE_URL` or addon, the
+  addon simply was not ready when the release command ran — wait for Track B to report `ready`,
+  then re-push (re-running the deploy if the git token has lapsed)
 
-Store `web_url` and `expires_at` from the response — needed for Steps 10 and 11.
+**Track B — addons** (only if Step 7 fired any): for each stored `addon_id`, poll until ready:
+
+```
+Tool: get_addon_status
+Input: { app_uuid, addon_id }
+Output: { ready: boolean, config_vars }
+```
+
+Poll every 5 seconds until `ready: true`. This runs concurrently with Track A — the two do not
+depend on each other.
+
+**Join:** do not proceed to Step 10 until `build.done === true` **and** every addon reports
+`ready: true`.
+
+Store `web_url` and `expires_at` from `get_deployment_status` — needed for Steps 10 and 11.
 
 Note: `web_url` from `get_deployment_status` is the **claim portal URL**
 (`https://claim-canary.heroku.com/preview/<app_uuid>`). This IS the link to give the user.

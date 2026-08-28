@@ -74,8 +74,9 @@ Task(
 ```
 
 This task creates an anonymous session, creates the Heroku app via `create_preview_app`,
-provisions addons, sets secrets (CLI hybrid if needed), pushes code via git, and monitors
-the build via `get_deployment_status`.
+sets secrets (CLI hybrid if needed) and kicks off addon provisioning, pushes code via git
+promptly (the git token is short-lived), then monitors the build and addon readiness
+concurrently via `get_deployment_status` / `get_addon_status`.
 
 ## Step 5 — Surface next steps
 
