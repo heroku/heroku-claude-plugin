@@ -77,7 +77,7 @@ Output: { app_uuid, web_url, git_url, git_credentials: { token, expires_at }, mc
 - Store `app_uuid` — required for all remaining MCP calls
 - Store `git_url` and `git_credentials.token` — used in Step 8
 - Do **not** surface `web_url` from this step — it is the raw `*.herokuapp.com` address, not the link to give the user
-- `git_credentials` expire quickly — proceed through Steps 6 and 7 without delay
+- `git_credentials` expire quickly (~5 min) — proceed through Steps 6 and 7 without delay
 
 ## Step 6 — Provision addons
 
@@ -138,14 +138,25 @@ Reconstruct the authenticated URL from `git_url`:
 - `git_url` example: `https://git.heroku.com/floating-plateau-8391.git`
 - Authenticated form: `https://heroku:<token>@git.heroku.com/floating-plateau-8391.git`
 
-Capture the full push output. Grep it for the build ID — Heroku emits it in the remote
-output during the push. Look for patterns like:
-- `remote: Build UUID: <uuid>`
-- A line containing a UUID after `Build` or `build_id`
+Capture the full push output. The build id is **not** emitted as a `Build UUID:` line. It
+appears embedded in the CNB image path in the `*** Images (...)` block near the end of the
+push, in the form `builds:<uuid>` — e.g.:
+- `remote:       builds.heroku.com/<app_uuid>/builds:e0828838-c667-4acd-8e3e-c15fd602333f`
 
-Store the `build_id` for Step 9.
+Extract the 36-char UUID that follows `builds:` (regex `builds:([0-9a-f-]{36})`) and store it
+as `build_id` for Step 9. `build_id` is **optional** — `get_deployment_status` and
+`get_build_output` default to the latest build for the app when it is omitted, so if the
+pattern does not match, proceed to Step 9 without it.
 
-If the push fails with a credential error, surface the full output and stop.
+> Verified against a real staging push (2026-08-28). The build id's downstream acceptance by
+> the status tools is unconfirmed — `get_deployment_status`/`get_build_output` were returning
+> "try again shortly" errors on staging at probe time.
+
+If the push fails with a credential error, the one-shot token from Step 5 has likely lapsed
+(it expires ~5 min after `create_preview_app`). Surface the full output and stop; re-running
+the deploy mints a fresh session and app. (Minting fresh push creds for an *existing* preview
+app — the edit → redeploy loop — is `get_preview_app_git_credentials`' job, which belongs to a
+future redeploy flow, not this first-deploy skill.)
 
 **Fallback for build_id:** If the push output does not contain a parseable build ID, run:
 ```bash
@@ -206,8 +217,8 @@ Do not surface the raw `*.herokuapp.com` URL — the claim portal URL is the cor
 
 ```
 Tool: check_claim_status
-Input: { app_uuid, expires_at }
-Output: { claimed: boolean, expired: boolean }
+Input: { conversation_id, app_uuid }
+Output: { app_uuid, claimed: boolean, expired: boolean }
 ```
 
 Poll every 30 seconds. When the state changes:
