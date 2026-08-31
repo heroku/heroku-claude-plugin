@@ -18,11 +18,11 @@ The ALWAYS rules defined there apply to this entire skill without exception.
 
 Before writing a single line of code, confirm the following with the user:
 
-1. **Stack** — one of: `node`, `python`, `rails`, `go`.
+1. **Stack** — one of: `node`, `python`, `rails`, `go`, `website`.
    - If no preference given, present the supported options and ask
    - If an unsupported stack is requested (e.g. Elixir, Java), surface the supported list and ask for a preference
-   - If the user mentions a frontend framework (Vue, React, etc.), clarify: is this needed for MVP or is an API sufficient? Default to API-only unless explicitly confirmed otherwise
-   - Map languages to stacks: Python → `python`, Node/JS → `node`, Ruby/Rails → `rails`, Go/Golang → `go`
+   - If the user mentions a front-end framework (Vue, Svelte, Ember, React, etc.), clarify: is this a front-end only, browser app, or the front-end for a full-stack, server-side app?
+   - Map languages to stacks: Python → `python`, Node/JS → `node`, Ruby/Rails → `rails`, Go/Golang → `go`, Front-end Web → `website`
    - Python: ask FastAPI, Django, or Flask? Default: FastAPI
 
 2. **What is being built** — confirm the feature scope explicitly:
@@ -64,7 +64,7 @@ ${CLAUDE_PLUGIN_ROOT}/references/heroku/deploy-contract.md
 ${CLAUDE_PLUGIN_ROOT}/references/standards/<language>.md
 ```
 
-Where `<language>` maps to: python → `python.md`, node → `javascript.md`, rails → `ruby.md`, go → `go.md`
+Where `<language>` maps to: python → `python.md`, node → `node.md`, rails → `ruby.md`, go → `go.md`, website → `website.md`
 
 ## Step 3 — Run preflight
 
