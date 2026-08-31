@@ -1,19 +1,35 @@
 {
   "name": "heroku-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold and deploy applications to Heroku from natural language prompts.",
   "author": {
     "name": "jwinn"
   },
-  "keywords": ["heroku", "scaffold", "deployment", "docker", "buildpack"],
+  "keywords": [
+    "heroku",
+    "scaffold",
+    "deployment",
+    "docker",
+    "buildpack"
+  ],
   "license": "MIT",
   "policy": {
     "reference_staleness_days": 30,
     "deploy_mode": "cli",
     "mcp_stub": false,
-    "supported_stacks": ["node", "python", "rails", "go"],
-    "supported_addons": ["heroku-postgresql", "heroku-redis"],
-    "unsupported_addons": ["kafka"],
+    "supported_stacks": [
+      "node",
+      "python",
+      "rails",
+      "go"
+    ],
+    "supported_addons": [
+      "heroku-postgresql",
+      "heroku-redis"
+    ],
+    "unsupported_addons": [
+      "kafka"
+    ],
     "token_budget_tracking": false,
     "token_budgets": {
       "_description": "Benchmarks from scenario eval runs — starting points to improve on, not hard limits. scaffold-app and deploy-anonymous measured from FastAPI+Postgres run (2026-08-12); build-and-deploy avg ~18500 across all stacks (2026-08-10); other atomic skills not yet individually measured.",
