@@ -16,3 +16,6 @@ htmlcov/
 *.egg-info/
 build/
 dist/
+
+# Claude Code project-local settings (tn autonomy grants)
+.claude/settings.local.json
