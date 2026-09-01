@@ -93,6 +93,19 @@ const RESULT_SCHEMA = {
         estimated_tokens: { type: "number" },
       },
     },
+    token_breakdown: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["skill", "tokens"],
+        properties: {
+          skill: { type: "string" },
+          tokens: { type: "number" },
+          budget: { type: "number" },
+          over_budget: { type: "boolean" },
+        },
+      },
+    },
     notes: { type: "string" },
   },
 };
@@ -175,12 +188,19 @@ ${reportTemplate}
 4. Run the teardown skill to destroy the Heroku app and save the session record to moot.
    If moot is unavailable, note it and continue.
 
-5. Delete the scaffold directory: \`rm -rf /tmp/scenario-${scenario.id}-<run-id>\`.
+5. Before deleting the scaffold directory, read the per-skill token log if it exists:
+   \`cat /tmp/scenario-${scenario.id}-<run-id>/.heroku-plugin-token-usage.jsonl 2>/dev/null || echo "[]"\`
+   Parse each JSONL line as a record with fields: skill, tokens, budget, over_budget.
+   Include this as token_breakdown in your result (empty array if the file doesn't exist or
+   HEROKU_TOKEN_BUDGET_TRACKING was not set).
+
+6. Delete the scaffold directory: \`rm -rf /tmp/scenario-${scenario.id}-<run-id>\`.
    Do this regardless of whether the scenario succeeded or failed.
 
-6. Return the structured result. Include the app name, app URL (empty string if deploy failed),
+7. Return the structured result. Include the app name, app URL (empty string if deploy failed),
    whether deploy and teardown succeeded, whether moot saved, an estimated output token count
-   for the full build-and-deploy skill execution, and any notes about deviations or issues.
+   for the full build-and-deploy skill execution, the token_breakdown array from step 5, and
+   any notes about deviations or issues.
    Do NOT include a duration_ms field — the orchestrator measures wall-clock time externally.
 `;
 
@@ -230,6 +250,7 @@ const summary = {
     moot_saved: r.moot_saved,
     app_url: r.app_url,
     token_usage: r.token_usage,
+    token_breakdown: r.token_breakdown || [],
     duration_ms: r.duration_ms,
     duration_min: Math.round(r.duration_ms / 60000 * 10) / 10,
     assertions_passed: r.assertions.filter(a => a.passed).length,
