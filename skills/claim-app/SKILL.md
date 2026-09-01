@@ -13,7 +13,7 @@ allowed-tools: Bash, Read
 <!-- TODO: This skill needs implementation. The MCP deploy path (deploy-anonymous)
      is in place. This skill should use mcp-portal's check_claim_status tool and
      the claim portal URL surfaced by deploy-anonymous. Remove this notice when
-     implemented. See mcp/references/mcp-portal-tools.md for tool contracts. -->
+     implemented. -->
 
 ## Not Yet Implemented
 
@@ -23,8 +23,7 @@ claim flow has not been implemented yet. Surface this message to the user:
 ```
 The app claim workflow is not yet implemented.
 
-Your app preview link was surfaced by the deploy step. Visit it to claim ownership:
-  https://claim-canary.heroku.com/preview/<app_uuid>
+Your app preview link was surfaced by the deploy step. Visit it to claim ownership.
 ```
 
 ## Implementation Notes
@@ -38,4 +37,4 @@ When this skill is implemented, it should:
 5. On `claimed: true`: update session state, surface permanent URL
 6. Note: reauthentication may be required after claim (tokens invalidated on transfer)
 
-Reference: `mcp/references/mcp-portal-tools.md` — `check_claim_status` tool
+The `check_claim_status` MCP tool should be used — refer to the tool's own schema for its contract.

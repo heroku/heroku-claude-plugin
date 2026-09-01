@@ -212,8 +212,7 @@ depend on each other.
 
 Store `web_url` and `expires_at` from `get_deployment_status` — needed for Steps 10 and 11.
 
-Note: `web_url` from `get_deployment_status` is the **claim portal URL**
-(`https://claim-canary.heroku.com/preview/<app_uuid>`). This IS the link to give the user.
+Note: `web_url` from `get_deployment_status` is the **claim portal URL**. This IS the link to give the user.
 
 ## Step 10 — Save session state
 

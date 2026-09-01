@@ -71,7 +71,7 @@ selects the builder automatically).
 During anonymous deployment (pre-claim):
 - App is created by the mcp-portal server using its platform token — not the user's Heroku account
 - Addons are provisioned via `create_addon` MCP tool (`heroku-postgresql`, `heroku-redis` supported)
-- App URL visible to the user is the claim portal URL (`https://claim-canary.heroku.com/preview/<app_uuid>`)
+- App URL visible to the user is the claim portal URL returned as `web_url` from `get_deployment_status`
 - Claim window: 60 minutes from app creation (default)
 - App is transferred to user account when they claim it via the portal
 - After claim: app moves to user's Heroku account; addons become billable

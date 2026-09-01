@@ -23,8 +23,8 @@ Surface this message to the user:
 ```
 Access code generation is handled by the Heroku claim portal, not via MCP.
 
-To share your deployed app, share the claim portal URL from your deploy step:
-  https://claim-canary.heroku.com/preview/<app_uuid>
+To share your deployed app, share the claim portal URL from your deploy step.
+The `web_url` returned by `get_deployment_status` is the claim portal URL.
 
 From the claim portal, the recipient can accept the Terms of Service and
 take ownership of the app.
@@ -32,8 +32,6 @@ take ownership of the app.
 
 ## Notes
 
-- The claim portal at `https://claim-canary.heroku.com/preview/<app_uuid>` handles access
+- The claim portal URL is the `web_url` from `get_deployment_status`
 - Access control is managed through the ToU/nonce binding on the portal side
 - The `app_uuid` is saved in `.heroku-plugin-session.json` after a successful deploy
-
-Reference: `mcp/references/mcp-portal-tools.md`

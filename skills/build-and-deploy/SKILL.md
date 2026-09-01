@@ -86,7 +86,7 @@ After successful deployment, surface the claim portal URL from session state
 ✓ Your app is live!
 
   ─────────────────────────────────────────────────
-  Preview:   https://claim-canary.heroku.com/preview/<app_uuid>
+  Preview:   <web_url from get_deployment_status>
   ─────────────────────────────────────────────────
 
 Visit the preview URL to claim ownership of this app before the window closes.
