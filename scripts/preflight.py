@@ -3,16 +3,16 @@
 
 Checks:
   1. git    (required — deploy fails without it)
-  2. heroku (required — CLI deploy path; TODO: remove hard requirement once MCP implementation is available)
+  2. heroku (optional — only needed for secrets step: Django SECRET_KEY, Rails MASTER_KEY)
   3. docker (optional — enables local dev environment)
   4. Reference file staleness (if not --quick)
 
 Outputs JSON on stdout:
-  { "git": true, "heroku": true, "heroku_logged_in": true,
+  { "git": true, "heroku": true|false, "heroku_logged_in": true|false,
     "docker": true|false, "docker_skipped": false, "references_updated": [...] }
 
 Exits 0 on success or when optional checks are skipped.
-Exits 1 if git or heroku CLI is missing, or if heroku login check fails.
+Exits 1 only if git is missing.
 """
 
 from __future__ import annotations
@@ -33,7 +33,6 @@ GIT_INSTALL = {
     "Windows": "winget install Git.Git  (or https://git-scm.com/download/win)",
 }
 
-# TODO: remove HEROKU_INSTALL and heroku hard requirement once MCP implementation is available
 HEROKU_INSTALL = {
     "Darwin": "brew tap heroku/brew && brew install heroku  (or https://devcenter.heroku.com/articles/heroku-cli)",
     "Linux": "curl https://cli-assets.heroku.com/install.sh | sh  (or https://devcenter.heroku.com/articles/heroku-cli)",
@@ -65,9 +64,8 @@ def _check_git() -> tuple[bool, str]:
     return False, ""
 
 
-# TODO: remove _check_heroku and heroku hard requirement once MCP implementation is available
 def _check_heroku() -> tuple[bool, str]:
-    """Check heroku CLI is installed and user is logged in."""
+    """Check heroku CLI is installed. Optional — only needed for secret config vars."""
     if not shutil.which("heroku"):
         return False, ""
     result = subprocess.run(["heroku", "--version"], capture_output=True, text=True)
@@ -174,38 +172,30 @@ def main() -> int:
 
     print(f"✓ git  ({git_version})", file=sys.stderr)
 
-    # TODO: remove heroku CLI hard requirement once MCP implementation is available.
-    # --- heroku CLI (required until MCP deploy path is available) ---
+    # --- heroku CLI (optional — only needed for secret config vars) ---
     heroku_ok, heroku_version = _check_heroku()
     result["heroku"] = heroku_ok
     result["heroku_version"] = heroku_version
 
-    if not heroku_ok:
-        install_hint = HEROKU_INSTALL.get(_os_key(), "https://devcenter.heroku.com/articles/heroku-cli")
-        print(f"\n✗ Heroku CLI is required but not found.", file=sys.stderr)
-        print(f"  Install: {install_hint}", file=sys.stderr)
-        if args.json:
-            print(json.dumps(result))
-        return 1
+    if heroku_ok:
+        print(f"✓ heroku  ({heroku_version})", file=sys.stderr)
 
-    print(f"✓ heroku  ({heroku_version})", file=sys.stderr)
-
-    # --- heroku login check ---
-    if not args.dry_run:
-        logged_in, email = _check_heroku_login()
-        result["heroku_logged_in"] = logged_in
-        result["heroku_email"] = email
-
-        if not logged_in:
-            print(f"\n✗ Not logged in to Heroku.", file=sys.stderr)
-            print(f"  Run: heroku login", file=sys.stderr)
-            if args.json:
-                print(json.dumps(result))
-            return 1
-
-        print(f"✓ heroku logged in  ({email})", file=sys.stderr)
+        if not args.dry_run:
+            logged_in, email = _check_heroku_login()
+            result["heroku_logged_in"] = logged_in
+            result["heroku_email"] = email
+            if logged_in:
+                print(f"✓ heroku logged in  ({email})", file=sys.stderr)
+            else:
+                print(f"  heroku CLI found but not logged in — only needed if app uses generated secrets.", file=sys.stderr)
+                print(f"  Run: heroku login", file=sys.stderr)
+        else:
+            print(f"  (dry-run: skipping heroku login check)", file=sys.stderr)
     else:
-        print(f"  (dry-run: skipping heroku login check)", file=sys.stderr)
+        print(f"  heroku CLI not found — not required for deploy (MCP path).", file=sys.stderr)
+        print(f"  Only needed for apps with generated secrets (Django, Rails).", file=sys.stderr)
+        install_hint = HEROKU_INSTALL.get(_os_key(), "https://devcenter.heroku.com/articles/heroku-cli")
+        print(f"  Install if needed: {install_hint}", file=sys.stderr)
 
     # --- docker (optional) ---
     docker_ok = _check_docker()
