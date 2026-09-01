@@ -3,13 +3,12 @@
 
 Checks:
   1. git    (required — deploy fails without it)
-  2. heroku (optional — only needed for secrets step: Django SECRET_KEY, Rails MASTER_KEY)
-  3. docker (optional — enables local dev environment)
-  4. Reference file staleness (if not --quick)
+  2. docker (optional — enables local dev environment)
+  3. Reference file staleness (if not --quick)
 
 Outputs JSON on stdout:
-  { "git": true, "heroku": true|false, "heroku_logged_in": true|false,
-    "docker": true|false, "docker_skipped": false, "references_updated": [...] }
+  { "git": true, "docker": true|false, "docker_skipped": false,
+    "references_updated": [...] }
 
 Exits 0 on success or when optional checks are skipped.
 Exits 1 only if git is missing.
@@ -31,12 +30,6 @@ GIT_INSTALL = {
     "Darwin": "brew install git  (or https://git-scm.com/download/mac)",
     "Linux": "apt-get install git  (or https://git-scm.com/download/linux)",
     "Windows": "winget install Git.Git  (or https://git-scm.com/download/win)",
-}
-
-HEROKU_INSTALL = {
-    "Darwin": "brew tap heroku/brew && brew install heroku  (or https://devcenter.heroku.com/articles/heroku-cli)",
-    "Linux": "curl https://cli-assets.heroku.com/install.sh | sh  (or https://devcenter.heroku.com/articles/heroku-cli)",
-    "Windows": "winget install Heroku.HerokuCLI  (or https://devcenter.heroku.com/articles/heroku-cli)",
 }
 
 DOCKER_INSTALL = {
@@ -61,30 +54,6 @@ def _check_git() -> tuple[bool, str]:
     if shutil.which("git"):
         result = subprocess.run(["git", "--version"], capture_output=True, text=True)
         return True, result.stdout.strip()
-    return False, ""
-
-
-def _check_heroku() -> tuple[bool, str]:
-    """Check heroku CLI is installed. Optional — only needed for secret config vars."""
-    if not shutil.which("heroku"):
-        return False, ""
-    result = subprocess.run(["heroku", "--version"], capture_output=True, text=True)
-    return True, result.stdout.strip().splitlines()[0] if result.stdout else ""
-
-
-def _check_heroku_login() -> tuple[bool, str]:
-    """Return (logged_in, email). Runs heroku whoami."""
-    try:
-        result = subprocess.run(
-            ["heroku", "whoami"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return True, result.stdout.strip()
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
     return False, ""
 
 
@@ -148,10 +117,6 @@ def main() -> int:
     result = {
         "git": False,
         "git_version": "",
-        "heroku": False,
-        "heroku_version": "",
-        "heroku_logged_in": False,
-        "heroku_email": "",
         "docker": False,
         "docker_skipped": False,
         "references_updated": [],
@@ -171,31 +136,6 @@ def main() -> int:
         return 1
 
     print(f"✓ git  ({git_version})", file=sys.stderr)
-
-    # --- heroku CLI (optional — only needed for secret config vars) ---
-    heroku_ok, heroku_version = _check_heroku()
-    result["heroku"] = heroku_ok
-    result["heroku_version"] = heroku_version
-
-    if heroku_ok:
-        print(f"✓ heroku  ({heroku_version})", file=sys.stderr)
-
-        if not args.dry_run:
-            logged_in, email = _check_heroku_login()
-            result["heroku_logged_in"] = logged_in
-            result["heroku_email"] = email
-            if logged_in:
-                print(f"✓ heroku logged in  ({email})", file=sys.stderr)
-            else:
-                print(f"  heroku CLI found but not logged in — only needed if app uses generated secrets.", file=sys.stderr)
-                print(f"  Run: heroku login", file=sys.stderr)
-        else:
-            print(f"  (dry-run: skipping heroku login check)", file=sys.stderr)
-    else:
-        print(f"  heroku CLI not found — not required for deploy (MCP path).", file=sys.stderr)
-        print(f"  Only needed for apps with generated secrets (Django, Rails).", file=sys.stderr)
-        install_hint = HEROKU_INSTALL.get(_os_key(), "https://devcenter.heroku.com/articles/heroku-cli")
-        print(f"  Install if needed: {install_hint}", file=sys.stderr)
 
     # --- docker (optional) ---
     docker_ok = _check_docker()
