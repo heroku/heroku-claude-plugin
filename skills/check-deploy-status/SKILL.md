@@ -7,14 +7,14 @@ description: >-
   On failure, delegates diagnosis and repair to the `diagnose-and-fix` sub-agent
   (explicit Task delegation — LLM role is interpreting novel log text).
 argument-hint: "[app-uuid]"
-allowed-tools: Bash, Read, Task, mcp__mcp-portal__get_deployment_status, mcp__mcp-portal__get_build_output
+allowed-tools: Bash, Read, Task, mcp__mcp-portal__get_deployment_status
 ---
 
 # Check Deploy Status
 
 ## Step 1 — Load context
 
-Get `app_uuid`, `build_id`, and `target_dir` from:
+Get `conversation_id`, `app_uuid`, `build_id`, and `target_dir` from:
 1. Provided arguments
 2. `.heroku-plugin-session.json` in the current directory
 
@@ -22,19 +22,16 @@ Get `app_uuid`, `build_id`, and `target_dir` from:
 
 ```
 Tool: get_deployment_status
-Input: { app_uuid, build_id }
+Input: { conversation_id, app_uuid, build_id }   (build_id optional)
 Output: { web_url, expires_at, build: { done, failed, log }, database }
 ```
 
 If `build.done === false`, poll every 10 seconds until done.
 
-## Step 3 — Get full build log if needed
+## Step 3 — Analyze build log
 
-```
-Tool: get_build_output
-Input: { app_uuid, build_id }
-Output: { status, done, failed, log }
-```
+Use `build.log` from the `get_deployment_status` response.
+(`get_build_output` is no longer available — `get_deployment_status` carries the log.)
 
 Analyze `build.log` from the MCP response for:
 
