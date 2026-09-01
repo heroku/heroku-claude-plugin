@@ -5,7 +5,7 @@ description: >-
   "push to Heroku", "make it live", "ship it", or similar. Uses the mcp-portal
   MCP server to create a preview app, provision addons, and deploy via git push.
 argument-hint: "[target-dir]"
-allowed-tools: Bash, Read, Task, mcp__mcp-portal__create_anonymous_session, mcp__mcp-portal__check_anonymous_session_state, mcp__mcp-portal__create_preview_app, mcp__mcp-portal__create_addon, mcp__mcp-portal__get_addon_status, mcp__mcp-portal__get_deployment_status, mcp__mcp-portal__get_build_output, mcp__mcp-portal__check_claim_status
+allowed-tools: Bash, Read, Task, mcp__mcp-portal__create_anonymous_session, mcp__mcp-portal__check_anonymous_session_state, mcp__mcp-portal__create_preview_app, mcp__mcp-portal__get_preview_app_git_credentials, mcp__mcp-portal__create_addon, mcp__mcp-portal__get_addon_status, mcp__mcp-portal__get_deployment_status, mcp__mcp-portal__check_claim_status
 ---
 
 # Deploy to Heroku (Anonymous Preview)
@@ -87,7 +87,7 @@ For each addon slug, provision and wait for readiness:
 
 ```
 Tool: create_addon
-Input: { app_uuid, service }
+Input: { conversation_id, app_uuid, service }
 Output: { addon_id, name, plan, state, config_vars }
 ```
 
@@ -95,7 +95,7 @@ Then poll until ready:
 
 ```
 Tool: get_addon_status
-Input: { app_uuid, addon_id }
+Input: { conversation_id, app_uuid, addon_id }
 Output: { ready: boolean, config_vars }
 ```
 
@@ -138,25 +138,32 @@ Reconstruct the authenticated URL from `git_url`:
 - `git_url` example: `https://git.heroku.com/floating-plateau-8391.git`
 - Authenticated form: `https://heroku:<token>@git.heroku.com/floating-plateau-8391.git`
 
+**If credentials have expired** (received from `create_preview_app` but push not yet started),
+refresh them before pushing:
+
+```
+Tool: get_preview_app_git_credentials
+Input: { app_id: <app_uuid> }
+Output: { token, expires_at }
+```
+
 Capture the full push output. Grep it for the build ID — Heroku emits it in the remote
 output during the push. Look for patterns like:
 - `remote: Build UUID: <uuid>`
 - A line containing a UUID after `Build` or `build_id`
 
-Store the `build_id` for Step 9.
+Store the `build_id` for Step 9 if found.
 
 If the push fails with a credential error, surface the full output and stop.
 
-**Fallback for build_id:** If the push output does not contain a parseable build ID, run:
-```bash
-heroku builds --app <app_uuid> --json | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])"
-```
+**Fallback for build_id:** If the push output does not contain a parseable build ID,
+omit it from `get_deployment_status` — the server will use the latest build for the app.
 
 ## Step 9 — Monitor build
 
 ```
 Tool: get_deployment_status
-Input: { app_uuid, build_id }
+Input: { conversation_id, app_uuid, build_id }   (build_id optional)
 Output: { web_url, expires_at, build: { done, failed, log }, database }
 ```
 
@@ -180,12 +187,13 @@ Note: `web_url` from `get_deployment_status` is the **claim portal URL**
 Write to `.heroku-plugin-session.json` in target_dir:
 ```json
 {
-  "app_uuid":    "<app_uuid>",
-  "app_url":     "<web_url from get_deployment_status>",
-  "expires_at":  <expires_at>,
-  "stack":       "<stack from .heroku-plugin-scaffold.json>",
-  "target_dir":  "<path>",
-  "deployed_at": "<ISO8601 timestamp>"
+  "conversation_id": "<conversation_id>",
+  "app_uuid":        "<app_uuid>",
+  "app_url":         "<web_url from get_deployment_status>",
+  "expires_at":      <expires_at>,
+  "stack":           "<stack from .heroku-plugin-scaffold.json>",
+  "target_dir":      "<path>",
+  "deployed_at":     "<ISO8601 timestamp>"
 }
 ```
 
@@ -206,9 +214,11 @@ Do not surface the raw `*.herokuapp.com` URL — the claim portal URL is the cor
 
 ```
 Tool: check_claim_status
-Input: { app_uuid, expires_at }
+Input: { conversation_id, app_uuid }
 Output: { claimed: boolean, expired: boolean }
 ```
+
+Do not pass `expires_at` — the server tracks the deadline internally.
 
 Poll every 30 seconds. When the state changes:
 
