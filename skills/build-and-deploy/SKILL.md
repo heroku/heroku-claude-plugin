@@ -40,12 +40,11 @@ If resuming: skip completed steps based on session state fields present
 Task(
   subagent_type: "preflight",
   description: "Run preflight checks",
-  prompt: "Run preflight checks. Return JSON result with git, heroku, heroku_logged_in, and docker status."
+  prompt: "Run preflight checks. Return JSON result with git and docker status."
 )
 ```
 
-Gate on: `git: true`. Stop if it fails. `heroku` and `heroku_logged_in` are only
-required if the scaffolded app has `secret_env_vars` (see `.heroku-plugin-scaffold.json`).
+Gate on: `git: true`. Stop if it fails.
 Note `docker` availability — pass to scaffold-app via `with_docker`.
 
 ## Step 3 — Scaffold the app
