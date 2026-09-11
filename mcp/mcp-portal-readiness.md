@@ -2,7 +2,7 @@
 
 **Purpose:** Ordered list of MCP server features needed to complete the anonymous deploy
 integration in the plugin. Pass to the mcp-portal team; implement in order so each item
-can be tested independently as it lands on canary.
+can be tested independently as it lands on staging.
 
 **Active endpoint:** `https://mcp-portal.staging.herokudev.com/mcp?herokai=${HEROKAI_SECRET}` (per `.mcp.json`)  
 **Last validated:** 2026-08-28 — live staging probe; see below
@@ -49,7 +49,7 @@ the session state in a separate HTTP request.
 **What it unblocks:** Everything. Without this, ToS state can never transition from `pending`
 to `accepted` across two separate HTTP requests.
 
-**Current canary behavior:** Response text says "opened IN MEMORY ONLY — nothing was persisted"
+**Staging status (2026-08-28):** ✅ Done — state survives across requests.
 
 ---
 
@@ -61,8 +61,7 @@ needs to write `tos_status: "accepted"` back to the session store.
 **What it unblocks:** `check_anonymous_session_state` returning `"accepted"`, which is the
 gate before `create_preview_app`.
 
-**Current canary behavior:** `check_anonymous_session_state` always returns `"pending"` — no
-browser callback is wired.
+**Staging status (2026-08-28):** ✅ Done — browser callback fires and flips status to `"accepted"`.
 
 ---
 
@@ -74,8 +73,7 @@ a real `app_uuid`, `git_url`, and short-lived `git_credentials`.
 **What it unblocks:** Everything downstream — git push, build polling, addon provisioning,
 claim status. This is the critical path item.
 
-**Current canary behavior:** Returns `git_url: "https://git.invalid/..."` and
-`git_credentials.token: "STUB-git-jwt-not-real"`
+**Staging status (2026-08-28):** ✅ Done — returns real `app_uuid`, real `git_url` (`git.staging.herokudev.com`), and real RS256 JWT credentials.
 
 ---
 
@@ -92,13 +90,10 @@ token must work for:
 ```bash
 git push https://heroku:<token>@git.heroku.com/<app>.git
 ```
-The plugin also needs to know the exact format of the `build_id` in the git push remote
-output — Heroku embeds it in the push stdout and the plugin parses it from there to pass
-to `get_deployment_status`. Please confirm the exact line format once a real push is
-possible, e.g.:
-```
-remote: Build UUID: <uuid>
-```
+**`build_id` format confirmed (2026-08-28):** Appears in the `*** Images (...)` block as
+`builds.heroku.com/<app_uuid>/builds:<uuid>` — parse the UUID after `builds:` with
+regex `builds:([0-9a-f-]{36})`. The downstream acceptance of this `build_id` by
+`get_deployment_status` remains unconfirmed (tool currently down on staging).
 
 ---
 
@@ -111,7 +106,7 @@ is a real `app_uuid` and `build_id` flowing from items 3 and 4, plus confirmatio
 **What it unblocks:** Build monitoring and the `web_url` (claim portal URL) returned by
 `get_deployment_status`.
 
-**Current canary behavior:** Implemented and live — blocked only on receiving real inputs.
+**Staging status (2026-08-28):** ❌ **DOWN** — `get_deployment_status` and `get_build_output` both return "try again shortly" persistently. Highest-priority blocker.
 
 ---
 
@@ -124,18 +119,18 @@ item 3 to provision against. Required for any scaffolded app that includes
 **What it unblocks:** Postgres and Redis on anonymous preview apps (Django, Rails, any stack
 requesting addons).
 
-**Current canary behavior:** Implemented and live — blocked only on real `app_uuid`.
+**Staging status (2026-08-28):** ⏭️ Not yet exercised live (no-addon happy path run).
 
 ---
 
 ### 7. Claim polling (`check_claim_status`)
 
 **What it is:** Already hits the real Heroku API. Needs a real `app_uuid` from a live
-deployed app and the claim portal wired to canary.
+deployed app and the claim portal wired to staging.
 
 **What it unblocks:** Full end-to-end flow including the user claiming the app as their own.
 
-**Current canary behavior:** Implemented and live — blocked only on real `app_uuid`.
+**Staging status (2026-08-28):** ✅ Works — but returned `claimed: true` for an unclaimed app. Confirm whether staging auto-claims.
 
 ---
 

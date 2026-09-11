@@ -119,8 +119,10 @@ The 8 mcp-portal tools used by the (first-)deploy flow:
 | `create_addon` | Provision an addon (postgres, redis) |
 | `get_addon_status` | Poll addon until `ready: true` |
 | `get_deployment_status` | Poll build status; returns claim portal `web_url` |
-| `get_build_output` | Tail build log |
+| `share_in_browser` | Get a fresh single-use preview URL after build succeeds |
 | `check_claim_status` | Poll until app is claimed or expired |
+
+> `get_build_output` was removed from the active flow — `get_deployment_status` carries the build log.
 
 A 9th server tool, `get_preview_app_git_credentials`, mints fresh git push creds for an **already-provisioned** preview app — its purpose is the edit → redeploy loop (pushing a revision after the ~5-min `create_preview_app` creds have expired). It is **not** part of the first-deploy flow above and has no caller yet; it belongs to a future redeploy skill.
 
@@ -128,7 +130,7 @@ A 9th server tool, `get_preview_app_git_credentials`, mints fresh git push creds
 
 - `create_anonymous_session`, `check_anonymous_session_state`, `create_preview_app` — confirmed end-to-end. `create_preview_app` returns a real `git_url` (`https://git.staging.herokudev.com/<app>.git`) and real RS256 JWT `git_credentials` (~5-min lifetime) + `mcp_credentials` (~1-hr lifetime). Response shape matches this table and the `deploy-anonymous` Step 5 doc.
 - `get_preview_app_git_credentials` — **not operational on staging**: returns "could not reach the deploy service … needs operator attention." Because it fails at the service layer, the `app_id` argument (assumed to be `app_uuid`) is **still unverified**. Under investigation with the mcp-portal team; do not rely on the Step 8 re-mint path until it's confirmed working.
-- `create_addon`, `get_addon_status`, `get_deployment_status`, `get_build_output`, `check_claim_status` — not yet exercised live (require a real git push first).
+- `create_addon`, `get_addon_status`, `get_deployment_status`, `check_claim_status` — not yet exercised live end-to-end (require a real git push first). `check_claim_status` confirmed working on staging (2026-08-28). `get_build_output` removed from the active deploy flow.
 
 See `mcp/mcp-portal-readiness.md` for remaining server-side work items.
 

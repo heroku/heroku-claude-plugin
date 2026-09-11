@@ -73,7 +73,7 @@ This section covers how to exercise the plugin against a real Heroku account.
    claude --plugin-dir /path/to/heroku-plugin
    ```
 
-> **Note:** Live end-to-end testing requires the mcp-portal canary provisioning path to be active. Check `mcp/mcp-portal-readiness.md` for current server-side status before testing.
+> **Note:** Live end-to-end testing requires a working mcp-portal staging server. Session creation and app provisioning are confirmed working (2026-08-28). Currently blocked on `get_deployment_status` returning errors on staging. Check `mcp/mcp-portal-readiness.md` for current status.
 
 ### Test Scenarios
 

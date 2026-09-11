@@ -12,12 +12,9 @@ allowed-tools: Bash, Read, Task
 
 # Build and Deploy
 
-<!-- TODO: Step 4 below delegates to deploy-anonymous, which now uses the mcp-portal
-     MCP path (deploy_mode: "mcp" is already set in plugin.json). Step 5 needs to be
-     updated: surface the claim portal URL from session state rather than a raw
-     *.herokuapp.com URL. The mcp-portal provisioning path is still stubbed on the
-     canary — a live test is blocked until the server team ships real provisioning.
-     See mcp/mcp-portal-readiness.md. -->
+<!-- TODO: Step 5 needs a live end-to-end test to confirm the claim portal URL is
+     surfaced correctly. Blocked on get_deployment_status returning "try again shortly"
+     on staging as of 2026-08-28. Track status in mcp/mcp-portal-readiness.md. -->
 
 You are running the complete Heroku build-and-deploy workflow. This orchestrates
 atomic skills in sequence. Each step is independently resumable via session state.

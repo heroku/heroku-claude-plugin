@@ -68,7 +68,7 @@ Clarify scope before expanding it.
 | Stack | Language standards |
 |-------|--------------------|
 | `python` (fastapi / django / flask) | `references/standards/python.md` |
-| `node` (express) | `references/standards/javascript.md` |
+| `node` (express) | `references/standards/node.md` |
 | `rails` | `references/standards/ruby.md` |
 | `go` | `references/standards/go.md` |
 
