@@ -5,7 +5,7 @@ description: >-
   "push to Heroku", "make it live", "ship it", or similar. Uses the mcp-portal
   MCP server to create a preview app, provision addons, and deploy via git push.
 argument-hint: "[target-dir]"
-allowed-tools: Bash, Read, Task, mcp__plugin_heroku-plugin_mcp-portal__create_anonymous_session, mcp__plugin_heroku-plugin_mcp-portal__check_anonymous_session_state, mcp__plugin_heroku-plugin_mcp-portal__create_preview_app, mcp__plugin_heroku-plugin_mcp-portal__create_addon, mcp__plugin_heroku-plugin_mcp-portal__get_addon_status, mcp__plugin_heroku-plugin_mcp-portal__get_deployment_status, mcp__plugin_heroku-plugin_mcp-portal__get_build_output, mcp__plugin_heroku-plugin_mcp-portal__check_claim_status
+allowed-tools: Bash, Read, Task, mcp__plugin_heroku-plugin_mcp-portal__create_anonymous_session, mcp__plugin_heroku-plugin_mcp-portal__check_anonymous_session_state, mcp__plugin_heroku-plugin_mcp-portal__create_preview_app, mcp__plugin_heroku-plugin_mcp-portal__create_addon, mcp__plugin_heroku-plugin_mcp-portal__get_addon_status, mcp__plugin_heroku-plugin_mcp-portal__get_deployment_status, mcp__plugin_heroku-plugin_mcp-portal__share_in_browser, mcp__plugin_heroku-plugin_mcp-portal__check_claim_status
 ---
 
 # Deploy to Heroku (Anonymous Preview)
@@ -117,12 +117,12 @@ release phase runs.
 ```
 Tool: create_addon
 Input: { conversation_id, app_uuid, service }
-Output: { addon_id, name, plan, state, config_vars }
+Output: { id, app, plan, state, config_vars }
 ```
 
 `conversation_id` selects the anonymous provisioning path — it is required here (along with
-`app_uuid` and the allowlisted `service` slug). Store each `addon_id` — Step 9 polls it for
-readiness.
+`app_uuid` and the allowlisted `service` slug). Store each `id` — Step 9 polls it for
+readiness as `addon_id`.
 
 **Service slug mapping** (pass exactly these values as `service`):
 | `.heroku-plugin-scaffold.json` slug | MCP `service` value |
@@ -154,13 +154,13 @@ push, in the form `builds:<uuid>` — e.g.:
 - `remote:       builds.heroku.com/<app_uuid>/builds:e0828838-c667-4acd-8e3e-c15fd602333f`
 
 Extract the 36-char UUID that follows `builds:` (regex `builds:([0-9a-f-]{36})`) and store it
-as `build_id` for Step 9. `build_id` is **optional** — `get_deployment_status` and
-`get_build_output` default to the latest build for the app when it is omitted, so if the
-pattern does not match, proceed to Step 9 without it.
+as `build_id` for Step 9. `build_id` is **optional** — `get_deployment_status` defaults to
+the latest build for the app when it is omitted, so if the pattern does not match, proceed
+to Step 9 without it.
 
 > Verified against a real staging push (2026-08-28). The build id's downstream acceptance by
-> the status tools is unconfirmed — `get_deployment_status`/`get_build_output` were returning
-> "try again shortly" errors on staging at probe time.
+> `get_deployment_status` is unconfirmed — it was returning "try again shortly" errors at
+> probe time.
 
 If the push fails with a credential error, the one-shot token from Step 5 has likely lapsed
 (it expires ~5 min after `create_preview_app`). Surface the full output and stop; re-running
@@ -196,7 +196,7 @@ If `build.failed === true`:
   addon simply was not ready when the release command ran — wait for Track B to report `ready`,
   then re-push (re-running the deploy if the git token has lapsed)
 
-**Track B — addons** (only if Step 7 fired any): for each stored `addon_id`, poll until ready:
+**Track B — addons** (only if Step 7 fired any): for each `id` stored from `create_addon`, poll until ready:
 
 ```
 Tool: get_addon_status
@@ -210,9 +210,7 @@ depend on each other.
 **Join:** do not proceed to Step 10 until `build.done === true` **and** every addon reports
 `ready: true`.
 
-Store `web_url` and `expires_at` from `get_deployment_status` — needed for Steps 10 and 11.
-
-Note: `web_url` from `get_deployment_status` is the **claim portal URL**. This IS the link to give the user.
+Store `web_url` and `expires_at` from `get_deployment_status` — `web_url` is the **claim portal URL**, needed for Steps 10 and 11.
 
 ## Step 10 — Save session state
 
@@ -221,7 +219,7 @@ Write to `.heroku-plugin-session.json` in target_dir:
 {
   "conversation_id": "<conversation_id>",
   "app_uuid":        "<app_uuid>",
-  "app_url":         "<web_url from get_deployment_status>",
+  "claim_url":       "<web_url from get_deployment_status>",
   "expires_at":      <expires_at>,
   "stack":           "<stack from .heroku-plugin-scaffold.json>",
   "target_dir":      "<path>",
@@ -231,16 +229,26 @@ Write to `.heroku-plugin-session.json` in target_dir:
 
 ## Step 11 — Surface result to user
 
+Call `share_in_browser` to get a fresh single-use preview URL:
+
+```
+Tool: share_in_browser
+Input: { conversation_id, app_uuid }
+Output: { url }
+```
+
+Then surface both links:
+
 ```
 ✓ Your app is live!
 
-  Preview URL: <web_url>
+  Preview:  <url from share_in_browser>   ← view the running app
+  Claim:    <web_url from get_deployment_status>   ← transfer to your Heroku account
 
-  Open that link to see your app and claim it as your own Heroku account.
   The claim window is open for 1 hour.
 ```
 
-Do not surface the raw `*.herokuapp.com` URL — the claim portal URL is the correct link.
+Do not surface the raw `*.herokuapp.com` URL for either link.
 
 ## Step 12 — Monitor claim (background)
 
