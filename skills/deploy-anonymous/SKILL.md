@@ -39,7 +39,14 @@ Input: {}
 Output: { conversation_id, tos_url, tos_status }
 ```
 
-Surface the ToS URL to the user:
+Store `conversation_id` — thread it into every subsequent MCP call.
+
+**Apps-capable host (Claude Desktop with MCP App UI):** The server returns a terms card
+automatically. When the card appears, **do not** repeat the raw `tos_url` or `conversation_id`
+to the user — the card handles acceptance and will notify you when the deploy can continue.
+Proceed to Step 5 once the card signals acceptance.
+
+**Without the card:** Surface the ToS URL to the user:
 
 ```
 Before we deploy, you need to accept the Heroku Terms of Service:
@@ -49,9 +56,11 @@ Before we deploy, you need to accept the Heroku Terms of Service:
 Open that link in your browser and accept. I'll wait.
 ```
 
-Store `conversation_id` — thread it into every subsequent MCP call.
+Then proceed to Step 4.
 
-## Step 4 — Poll for ToS acceptance
+## Step 4 — Poll for ToS acceptance [skip if card handled it]
+
+> Skip this step if an Apps-capable terms card appeared in Step 3 and already confirmed acceptance.
 
 ```
 Tool: check_anonymous_session_state
@@ -173,7 +182,14 @@ omit it from `get_deployment_status` — the server will use the latest build fo
 
 ## Step 9 — Monitor build and finish addons (concurrent)
 
-Two things complete after the push and are independent — poll both, then **join** before Step 10.
+**Apps-capable host (Claude Desktop with MCP App UI):** Call `get_deployment_status` **once**
+to show the live deployment card. The card polls build status, addon readiness, and claim status
+on its own — **do not** continue polling `get_deployment_status` or `check_claim_status` while
+the card is present. Wait for the card to signal completion, then read `web_url` and
+`expires_at` from the single response and proceed to Step 10.
+
+**Without the card:** Two tracks complete after the push and are independent — poll both, then
+**join** before Step 10.
 
 **Track A — build:**
 
@@ -229,7 +245,10 @@ Write to `.heroku-plugin-session.json` in target_dir:
 
 ## Step 11 — Surface result to user
 
-Call `share_in_browser` to get a fresh single-use preview URL:
+**Apps-capable host:** The live card already surfaced Preview and Claim actions — **do not**
+repeat the raw URLs. Confirm to the user that the deploy succeeded and the card has the links.
+
+**Without the card:** Call `share_in_browser` to get a fresh single-use preview URL:
 
 ```
 Tool: share_in_browser
@@ -251,6 +270,11 @@ Then surface both links:
 Do not surface the raw `*.herokuapp.com` URL for either link.
 
 ## Step 12 — Monitor claim (background)
+
+**Apps-capable host:** The live card handles claim monitoring — **do not** poll
+`check_claim_status` while the card is present.
+
+**Without the card:**
 
 ```
 Tool: check_claim_status
