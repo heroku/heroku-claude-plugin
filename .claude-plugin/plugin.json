@@ -9,7 +9,7 @@
   "license": "MIT",
   "policy": {
     "reference_staleness_days": 30,
-"supported_stacks": ["node", "python", "rails", "go"],
+    "supported_stacks": ["node", "python", "rails", "go"],
     "supported_addons": ["heroku-postgresql", "heroku-redis"],
     "unsupported_addons": ["kafka"],
     "token_budget_tracking": false,
