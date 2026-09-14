@@ -6,48 +6,42 @@ description: >-
   the build", "what happened to my deploy?", "are there any errors?", or similar.
   On failure, delegates diagnosis and repair to the `diagnose-and-fix` sub-agent
   (explicit Task delegation — LLM role is interpreting novel log text).
-argument-hint: "[app-name]"
-allowed-tools: Bash, Read, Task
+argument-hint: "[app-uuid]"
+allowed-tools: Bash, Read, Task, mcp__plugin_heroku-plugin_mcp-portal__get_deployment_status
 ---
 
 # Check Deploy Status
 
-<!-- TODO: Replace CLI polling with MCP tool calls (get_deployment_status,
-     get_build_output) once the connector-mcp implementation is available. -->
-
 ## Step 1 — Load context
 
-Get `app_name` and `target_dir` from:
+Get `conversation_id`, `app_uuid`, `build_id`, and `target_dir` from:
 1. Provided arguments
 2. `.heroku-plugin-session.json` in the current directory
 
-## Step 2 — Check latest release
+## Step 2 — Check deployment status via MCP
 
-```bash
-heroku releases --app <app-name> --num 5
+```
+Tool: get_deployment_status
+Input: { conversation_id, app_uuid, build_id }   (build_id optional)
+Output: { web_url, expires_at, build: { done, failed, log }, database }
 ```
 
-Parse output for the most recent release. Look for:
-- `v<N>  Deploy <sha>  <user>  <timestamp>` → successful deploy
-- `v<N>  ... failed` → failed release
+If `build.done === false`, poll every 10 seconds until done.
 
-## Step 3 — Stream recent build logs
+## Step 3 — Analyze build log
 
-```bash
-heroku logs --app <app-name> --num 100 --source app,heroku
-```
+Use `build.log` from the `get_deployment_status` response.
+(`get_build_output` is no longer available — `get_deployment_status` carries the log.)
 
-Analyze the output for:
+Analyze `build.log` from the MCP response for:
 
 | Pattern | Diagnosis |
 |---------|-----------|
-| `State changed from starting to up` | Deployment succeeded |
-| `State changed from starting to crashed` | App crashed on boot |
-| `Error R10 (Boot timeout)` | App didn't bind to $PORT in time |
-| `Error H10 (App crashed)` | Runtime crash |
-| ` ! ` lines | Heroku platform errors |
+| `Build succeeded` / `Launching` | Deployment succeeded |
+| `Build failed` / ` ! ` lines | Build error — check log for root cause |
 | `ModuleNotFoundError` / `ImportError` | Missing dependency |
 | `no such file or directory` | Missing file/binary |
+| `Error R10` | App didn't bind to $PORT in time |
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/heroku/deploy-contract.md` for the full
 error reference. Read `${CLAUDE_PLUGIN_ROOT}/references/stacks/<stack>.md` for
@@ -55,14 +49,10 @@ stack-specific gotchas.
 
 ## Step 4a — Deployment succeeded
 
-```bash
-heroku ps --app <app-name>
-```
-
-Confirm `web.1` is in `up` state.
+Probe the app URL to confirm it is responding:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" https://<app-name>.herokuapp.com/
+curl -s -o /dev/null -w "%{http_code}" <web_url from session>
 ```
 
 Surface result to user:
@@ -70,10 +60,9 @@ Surface result to user:
 ```
 ✓ App is live!
 
-  URL:    https://<app-name>.herokuapp.com
-  Status: web.1 up
+  Preview URL: <web_url>
 
-Open in browser: heroku open --app <app-name>
+  Open that link to view your app and claim it as your own Heroku account.
 ```
 
 ## Step 4b — Deployment failed (self-heal loop, max 3 attempts)
@@ -87,7 +76,7 @@ Open in browser: heroku open --app <app-name>
 
 Initialize `attempt = 1`. While `attempt <= 3`:
 
-1. Collect the relevant log excerpt (last 50–100 lines from Step 3).
+1. Collect the log excerpt from `build.log` (last 50–100 lines).
 
 2. Call the `diagnose-and-fix` sub-agent:
 
@@ -96,7 +85,7 @@ Initialize `attempt = 1`. While `attempt <= 3`:
      subagent_type: "diagnose-and-fix",
      description: "Diagnose and fix Heroku deploy failure",
      prompt: "Diagnose the following Heroku deploy failure and apply a fix.
-              App: '<app-name>' at '<target_dir>'. Stack: '<stack>'.
+              App UUID: '<app_uuid>' at '<target_dir>'. Stack: '<stack>'.
               Log excerpt:
               <log lines>
 
@@ -110,12 +99,8 @@ Initialize `attempt = 1`. While `attempt <= 3`:
    )
    ```
 
-3. If `result.fixed == true`:
-   ```bash
-   cd <target_dir>
-   git push heroku main
-   ```
-   Re-run from Step 2. Increment `attempt`.
+3. If `result.fixed == true`: re-run `deploy-anonymous` from Step 8 (git push).
+   Increment `attempt`.
 
 4. If `result.fixed == false`: increment `attempt` and loop.
 
@@ -131,11 +116,11 @@ Relevant logs:
 Suggested next step: <specific fix>
 ```
 
-## Step 4c — App running but unhealthy
+## Step 4c — App deployed but not responding
 
-If `heroku ps` shows `web.1` up but HTTP probe returns non-2xx:
+If HTTP probe returns non-2xx on the preview URL:
 - Surface the URL and status code
-- Suggest `heroku logs --tail --app <app-name>` for live debugging
+- Show the last 20 lines of `build.log`
 - Do not attempt auto-fix for runtime errors — surface to user
 
 ## Step 5 — Update session state
@@ -144,6 +129,6 @@ If deployment succeeded, update `.heroku-plugin-session.json`:
 ```json
 {
   "deployed": true,
-  "app_url": "https://<app-name>.herokuapp.com"
+  "app_url": "<web_url from get_deployment_status>"
 }
 ```

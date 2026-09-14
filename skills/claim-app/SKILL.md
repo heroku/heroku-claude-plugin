@@ -10,33 +10,25 @@ allowed-tools: Bash, Read
 
 # Claim App
 
-<!-- TODO: This skill is MCP-only and requires the connector-mcp anonymous deploy
-     implementation (create_preview_app, check_claim_status, W-23636832 nonce
-     binding, W-23636833 ToU gate). It is NOT available in CLI deploy mode.
-     Remove this notice and implement once MCP work is complete. -->
+<!-- TODO: This skill needs implementation. The MCP deploy path (deploy-anonymous)
+     is in place. This skill should use mcp-portal's check_claim_status tool and
+     the claim portal URL surfaced by deploy-anonymous. Remove this notice when
+     implemented. -->
 
-## Not Available in CLI Mode
+## Not Yet Implemented
 
-This skill requires the anonymous deploy path, which depends on the Heroku
-connector-mcp server implementation. It is not available when using the
-Heroku CLI deploy path.
-
-Surface this message to the user:
+The MCP deploy path is live (`deploy-anonymous` uses mcp-portal), but this skill's
+claim flow has not been implemented yet. Surface this message to the user:
 
 ```
-The app claim workflow requires the Heroku MCP anonymous deploy path,
-which is not yet available.
+The app claim workflow is not yet implemented.
 
-Your app '<app-name>' is already in your Heroku account (deployed via CLI).
-You can manage it directly:
-
-  heroku open --app <app-name>
-  https://dashboard.heroku.com/apps/<app-name>
+Your app preview link was surfaced by the deploy step. Visit it to claim ownership.
 ```
 
-## MCP Implementation Notes (for when this is built)
+## Implementation Notes
 
-When MCP anonymous deploy is available, this skill should:
+When this skill is implemented, it should:
 
 1. Load `app_uuid`, `session_id`, and `expires_at` from session state
 2. Check claim window — surface error if expired
@@ -45,4 +37,4 @@ When MCP anonymous deploy is available, this skill should:
 5. On `claimed: true`: update session state, surface permanent URL
 6. Note: reauthentication may be required after claim (tokens invalidated on transfer)
 
-Reference: `mcp/references/connector-mcp-tools.md` — `check_claim_status` tool
+The `check_claim_status` MCP tool should be used — refer to the tool's own schema for its contract.

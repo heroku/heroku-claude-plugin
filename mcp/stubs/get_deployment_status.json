@@ -1,0 +1,22 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"app_uuid\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\", \"web_url\": \"https://claim-canary.heroku.com/preview/a1b2c3d4-e5f6-7890-abcd-ef1234567890\", \"expires_at\": 1756227600000, \"build\": {\"done\": true, \"failed\": false, \"log\": \"-----> Node.js app detected\\n-----> Build succeeded\"}, \"database\": null}"
+      }
+    ],
+    "structuredContent": {
+      "app_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "web_url": "https://claim-canary.heroku.com/preview/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "expires_at": 1756227600000,
+      "build": {
+        "done": true,
+        "failed": false,
+        "log": "-----> Node.js app detected\n-----> Build succeeded"
+      },
+      "database": null
+    }
+  },
+  "isError": false
+}

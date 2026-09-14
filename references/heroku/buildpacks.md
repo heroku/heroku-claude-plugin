@@ -1,4 +1,4 @@
-<!-- Source: https://devcenter.heroku.com/articles/buildpacks — verified 2026-07-30 -->
+<!-- Source: https://devcenter.heroku.com/articles/buildpacks — verified 2026-09-10 -->
 
 # Heroku Buildpacks
 

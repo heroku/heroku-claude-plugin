@@ -1,0 +1,24 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Provisioned preview app floating-plateau-8391; push source to git_url using git_credentials (they expire soon)."
+      }
+    ],
+    "structuredContent": {
+      "app_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "web_url": "https://floating-plateau-8391.herokuapp.com",
+      "git_url": "https://git.heroku.com/floating-plateau-8391.git",
+      "git_credentials": {
+        "token": "stub-git-jwt-token",
+        "expires_at": "2026-08-25T19:00:00.000Z"
+      },
+      "mcp_credentials": {
+        "token": "stub-mcp-jwt-token",
+        "expires_at": "2026-08-25T19:00:00.000Z"
+      }
+    }
+  },
+  "isError": false
+}

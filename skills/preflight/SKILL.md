@@ -67,6 +67,8 @@ Surface a clean summary:
 ```
 Heroku plugin preflight:
 
+  Plugin: heroku-plugin v<CLAUDE_PLUGIN_VERSION>
+
   ✓ git (<version>)
   ✓ docker              (or: ⚠ docker — skipped, local dev unavailable)
   ✓ references current  (or: ↻ references updated: <files>)

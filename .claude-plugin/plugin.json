@@ -1,6 +1,12 @@
 {
   "name": "heroku-plugin",
   "version": "0.1.0",
+  "mcpServers": {
+    "mcp-portal": {
+      "type": "http",
+      "url": "${HEROKU_MCP_ENDPOINT}/mcp?herokai=${HEROKAI_SECRET}"
+    }
+  },
   "description": "Scaffold and deploy applications to Heroku from natural language prompts.",
   "author": {
     "name": "jwinn"
@@ -9,22 +15,23 @@
   "license": "MIT",
   "policy": {
     "reference_staleness_days": 30,
-    "deploy_mode": "cli",
+    "deploy_mode": "mcp",
+
     "mcp_stub": false,
     "supported_stacks": ["node", "python", "rails", "go"],
     "supported_addons": ["heroku-postgresql", "heroku-redis"],
     "unsupported_addons": ["kafka"],
     "token_budget_tracking": false,
     "token_budgets": {
-      "_description": "Benchmarks from scenario eval runs — starting points to improve on, not hard limits. scaffold-app and deploy-anonymous measured from FastAPI+Postgres run (2026-08-12); build-and-deploy avg ~18500 across all stacks (2026-08-10); other atomic skills not yet individually measured.",
+      "_description": "Calibrated from scenario eval runs (2026-08-10). build-and-deploy measured at ~12000 word-count tokens (proxy) on a full FastAPI+Postgres run; budgets for atomic skills remain estimates pending individual measurement. Re-measure when skills change significantly.",
       "preflight": 300,
-      "scaffold-app": 8500,
-      "deploy-anonymous": 3200,
+      "scaffold-app": 800,
+      "deploy-anonymous": 600,
       "check-deploy-status": 500,
       "generate-access-code": 400,
       "claim-app": 500,
       "go-live": 400,
-      "build-and-deploy": 18500
+      "build-and-deploy": 20000
     }
   }
 }

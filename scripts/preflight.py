@@ -3,16 +3,15 @@
 
 Checks:
   1. git    (required — deploy fails without it)
-  2. heroku (required — CLI deploy path; TODO: remove hard requirement once MCP implementation is available)
-  3. docker (optional — enables local dev environment)
-  4. Reference file staleness (if not --quick)
+  2. docker (optional — enables local dev environment)
+  3. Reference file staleness (if not --quick)
 
 Outputs JSON on stdout:
-  { "git": true, "heroku": true, "heroku_logged_in": true,
-    "docker": true|false, "docker_skipped": false, "references_updated": [...] }
+  { "git": true, "docker": true|false, "docker_skipped": false,
+    "references_updated": [...] }
 
 Exits 0 on success or when optional checks are skipped.
-Exits 1 if git or heroku CLI is missing, or if heroku login check fails.
+Exits 1 only if git is missing.
 """
 
 from __future__ import annotations
@@ -31,13 +30,6 @@ GIT_INSTALL = {
     "Darwin": "brew install git  (or https://git-scm.com/download/mac)",
     "Linux": "apt-get install git  (or https://git-scm.com/download/linux)",
     "Windows": "winget install Git.Git  (or https://git-scm.com/download/win)",
-}
-
-# TODO: remove HEROKU_INSTALL and heroku hard requirement once MCP implementation is available
-HEROKU_INSTALL = {
-    "Darwin": "brew tap heroku/brew && brew install heroku  (or https://devcenter.heroku.com/articles/heroku-cli)",
-    "Linux": "curl https://cli-assets.heroku.com/install.sh | sh  (or https://devcenter.heroku.com/articles/heroku-cli)",
-    "Windows": "winget install Heroku.HerokuCLI  (or https://devcenter.heroku.com/articles/heroku-cli)",
 }
 
 DOCKER_INSTALL = {
@@ -62,31 +54,6 @@ def _check_git() -> tuple[bool, str]:
     if shutil.which("git"):
         result = subprocess.run(["git", "--version"], capture_output=True, text=True)
         return True, result.stdout.strip()
-    return False, ""
-
-
-# TODO: remove _check_heroku and heroku hard requirement once MCP implementation is available
-def _check_heroku() -> tuple[bool, str]:
-    """Check heroku CLI is installed and user is logged in."""
-    if not shutil.which("heroku"):
-        return False, ""
-    result = subprocess.run(["heroku", "--version"], capture_output=True, text=True)
-    return True, result.stdout.strip().splitlines()[0] if result.stdout else ""
-
-
-def _check_heroku_login() -> tuple[bool, str]:
-    """Return (logged_in, email). Runs heroku whoami."""
-    try:
-        result = subprocess.run(
-            ["heroku", "whoami"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return True, result.stdout.strip()
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
     return False, ""
 
 
@@ -150,10 +117,6 @@ def main() -> int:
     result = {
         "git": False,
         "git_version": "",
-        "heroku": False,
-        "heroku_version": "",
-        "heroku_logged_in": False,
-        "heroku_email": "",
         "docker": False,
         "docker_skipped": False,
         "references_updated": [],
@@ -173,39 +136,6 @@ def main() -> int:
         return 1
 
     print(f"✓ git  ({git_version})", file=sys.stderr)
-
-    # TODO: remove heroku CLI hard requirement once MCP implementation is available.
-    # --- heroku CLI (required until MCP deploy path is available) ---
-    heroku_ok, heroku_version = _check_heroku()
-    result["heroku"] = heroku_ok
-    result["heroku_version"] = heroku_version
-
-    if not heroku_ok:
-        install_hint = HEROKU_INSTALL.get(_os_key(), "https://devcenter.heroku.com/articles/heroku-cli")
-        print(f"\n✗ Heroku CLI is required but not found.", file=sys.stderr)
-        print(f"  Install: {install_hint}", file=sys.stderr)
-        if args.json:
-            print(json.dumps(result))
-        return 1
-
-    print(f"✓ heroku  ({heroku_version})", file=sys.stderr)
-
-    # --- heroku login check ---
-    if not args.dry_run:
-        logged_in, email = _check_heroku_login()
-        result["heroku_logged_in"] = logged_in
-        result["heroku_email"] = email
-
-        if not logged_in:
-            print(f"\n✗ Not logged in to Heroku.", file=sys.stderr)
-            print(f"  Run: heroku login", file=sys.stderr)
-            if args.json:
-                print(json.dumps(result))
-            return 1
-
-        print(f"✓ heroku logged in  ({email})", file=sys.stderr)
-    else:
-        print(f"  (dry-run: skipping heroku login check)", file=sys.stderr)
 
     # --- docker (optional) ---
     docker_ok = _check_docker()

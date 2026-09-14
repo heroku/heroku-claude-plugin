@@ -104,7 +104,7 @@ def apply_glue(app_name: str, target_dir: Path, options: dict) -> None:
         scripts["lint"] = "eslint ."
         scripts["format"] = "prettier --write ."
         scripts["test"] = "jest"
-        scripts["prepare"] = "husky"
+        scripts["prepare"] = "[ \"$NODE_ENV\" = \"production\" ] || husky"
         pkg["lint-staged"] = {
             "*.js": ["eslint --fix", "prettier --write"],
         }

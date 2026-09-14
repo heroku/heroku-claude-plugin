@@ -7,6 +7,7 @@ __pycache__/
 *.swo
 evals/.tmp/
 .heroku-plugin-session.json
+.claude.json
 .heroku-plugin-token-usage.jsonl
 mcp/references/
 .coverage
@@ -15,3 +16,6 @@ htmlcov/
 *.egg-info/
 build/
 dist/
+
+# Claude Code project-local settings (tn autonomy grants)
+.claude/settings.local.json

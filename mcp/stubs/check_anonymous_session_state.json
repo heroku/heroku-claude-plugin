@@ -1,0 +1,14 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "The terms of use have been accepted for session stub-conv-abc123."
+      }
+    ],
+    "structuredContent": {
+      "tos_status": "accepted"
+    }
+  },
+  "isError": false
+}

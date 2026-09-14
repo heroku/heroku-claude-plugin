@@ -12,9 +12,9 @@ allowed-tools: Bash, Read, Task
 
 # Build and Deploy
 
-<!-- TODO: Currently uses Heroku CLI deploy path. When connector-mcp anonymous deploy
-     is available, update Step 4 to use deploy-anonymous (MCP path) and add Step 5
-     claim/access-code flow. Switch deploy_mode in plugin.json from "cli" to "mcp". -->
+<!-- TODO: Step 5 needs a live end-to-end test to confirm the claim portal URL is
+     surfaced correctly. Blocked on get_deployment_status returning "try again shortly"
+     on staging as of 2026-08-28. Track status in mcp/mcp-portal-readiness.md. -->
 
 You are running the complete Heroku build-and-deploy workflow. This orchestrates
 atomic skills in sequence. Each step is independently resumable via session state.
@@ -37,11 +37,11 @@ If resuming: skip completed steps based on session state fields present
 Task(
   subagent_type: "preflight",
   description: "Run preflight checks",
-  prompt: "Run preflight checks. Return JSON result with git, heroku, heroku_logged_in, and docker status."
+  prompt: "Run preflight checks. Return JSON result with git and docker status."
 )
 ```
 
-Gate on: `git: true`, `heroku: true`, `heroku_logged_in: true`. Stop if any fail.
+Gate on: `git: true`. Stop if it fails.
 Note `docker` availability — pass to scaffold-app via `with_docker`.
 
 ## Step 3 — Scaffold the app
@@ -58,38 +58,41 @@ Task(
 
 Parse result. Save to session state.
 
-## Step 4 — Deploy to Heroku (CLI)
+## Step 4 — Deploy to Heroku (MCP)
 
 ```
 Task(
   subagent_type: "deploy-anonymous",
-  description: "Deploy scaffolded app to Heroku via CLI",
+  description: "Deploy scaffolded app to Heroku via mcp-portal",
   prompt: "Deploy app '<app_name>' at '<target_dir>' to Heroku.
            Stack: <stack>. Addons: <addons>."
 )
 ```
 
-This task creates the Heroku app, provisions addons, pushes code via git,
-and calls check-deploy-status.
+This task creates an anonymous session, creates the Heroku app via `create_preview_app`,
+sets secrets (CLI hybrid if needed) and kicks off addon provisioning, pushes code via git
+promptly (the git token is short-lived), then monitors the build and addon readiness
+concurrently via `get_deployment_status` / `get_addon_status`.
 
 ## Step 5 — Surface next steps
 
-After successful deployment:
+After successful deployment, surface the claim portal URL from session state
+(`web_url` returned by `get_deployment_status`):
 
 ```
 ✓ Your app is live!
 
   ─────────────────────────────────────────────────
-  URL:       https://<app_name>.herokuapp.com
-  Dashboard: https://dashboard.heroku.com/apps/<app_name>
+  Preview:   <web_url from get_deployment_status>
   ─────────────────────────────────────────────────
+
+Visit the preview URL to claim ownership of this app before the window closes.
 
 What would you like to do next?
 
   • Continue developing locally — your code is at <target_dir>
-  • Watch logs:    heroku logs --tail --app <app_name>
-  • Scale dynos:   heroku ps:scale web=1 --app <app_name>
-  • Open app:      /heroku-plugin:go-live
+  • Claim this app:  /heroku-plugin:claim-app
+  • Clean up:        /heroku-plugin:teardown
 ```
 
 ## Recovery
