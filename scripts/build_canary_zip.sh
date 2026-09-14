@@ -26,18 +26,6 @@ git -C "$REPO_ROOT" archive HEAD | tar -x -C "$TMPDIR"
 rm -rf "$TMPDIR/mcp"
 rm -f  "$TMPDIR/.mcp.json"
 
-# 3. Write the hardcoded canary .mcp.json
-cat > "$TMPDIR/.mcp.json" << EOF
-{
-  "mcpServers": {
-    "mcp-portal": {
-      "type": "http",
-      "url": "${MCP_URL}/mcp?herokai=${HEROKAI_SECRET}"
-    }
-  }
-}
-EOF
-
 # 4. Zip from inside the clean directory
 rm -f "$OUTPUT"
 (cd "$TMPDIR" && zip -r "$OUTPUT" . -x "*.pyc" -x "__pycache__/*" -q)
