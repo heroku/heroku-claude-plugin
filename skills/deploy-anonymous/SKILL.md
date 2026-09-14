@@ -147,20 +147,9 @@ continue without the addon or stop.
 Push **immediately** after Step 7 — this is the critical path against the credential clock; do
 not wait on addon readiness (that is Step 9).
 
-**Follow the push instructions returned by `create_preview_app` exactly.** The tool response
-includes the git push command to run — use it verbatim, including any push options (e.g. async
-flags) it specifies. Do not substitute your own git push command.
-
-If `create_preview_app` did not include explicit push instructions, fall back to:
-
-```bash
-cd <target_dir>
-git push https://heroku:<git_credentials.token>@<git_url_host_and_path> HEAD:main 2>&1
-```
-
-where the authenticated URL is reconstructed from `git_url`:
-- `git_url` example: `https://git.heroku.com/floating-plateau-8391.git`
-- Authenticated form: `https://heroku:<token>@git.heroku.com/floating-plateau-8391.git`
+**Use the git push command from the `create_preview_app` tool description exactly — including
+any push options it specifies (e.g. `-o heroku.action=async`).** Do not substitute or simplify
+the command. The tool description is the authoritative source; this skill does not override it.
 
 If the push response includes a `build_id` directly, store it for Step 9. Otherwise capture
 the full push output and attempt to parse it: the build id may appear in the `*** Images (...)`
