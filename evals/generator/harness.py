@@ -16,10 +16,11 @@ SCAFFOLD = REPO_ROOT / "scripts" / "scaffold.py"
 
 # Layer 2 files asserted for byte-identity across runs
 LAYER2_FILES = {
-    "node":   ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "eslint.config.js", ".prettierrc", ".pre-commit-config.yaml"],
-    "python": ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "requirements.txt", ".python-version", ".pre-commit-config.yaml", "pyproject.toml"],
-    "rails":  ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", ".rubocop.yml", ".pre-commit-config.yaml"],
-    "go":     ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "main.go", "go.mod", ".golangci.yml", ".pre-commit-config.yaml"],
+    "node":    ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "eslint.config.js", ".prettierrc", ".pre-commit-config.yaml"],
+    "python":  ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "requirements.txt", ".python-version", ".pre-commit-config.yaml", "pyproject.toml"],
+    "rails":   ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", ".rubocop.yml", ".pre-commit-config.yaml"],
+    "go":      ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", "main.go", "go.mod", ".golangci.yml", ".pre-commit-config.yaml"],
+    "website": ["project.toml", ".heroku-plugin-scaffold.json"],
 }
 
 LAYER2_DOCKER_FILES = ["Dockerfile", "docker-compose.yml"]
@@ -102,6 +103,16 @@ class ScaffoldEvalCase(unittest.TestCase):
         self.assertNotIn("builder =", content, "project.toml must not pin the builder — Kodon selects it")
         self.assertIn(f'id = "{expected_buildpack}"', content, f"project.toml missing buildpack {expected_buildpack}")
         self.assertIn('id = "heroku/procfile"', content, "project.toml missing heroku/procfile")
+
+    def assert_project_toml_static(self, target_dir: Path, expected_buildpack: str) -> None:
+        """Like assert_project_toml but without the heroku/procfile requirement."""
+        path = target_dir / "project.toml"
+        self.assertTrue(path.exists(), "project.toml missing")
+        content = path.read_text(encoding="utf-8")
+        self.assertIn('schema-version = "0.2"', content, "project.toml missing schema-version")
+        self.assertNotIn("builder =", content, "project.toml must not pin the builder — Kodon selects it")
+        self.assertIn(f'id = "{expected_buildpack}"', content, f"project.toml missing buildpack {expected_buildpack}")
+        self.assertNotIn('id = "heroku/procfile"', content, "static-web-server project.toml must not include heroku/procfile")
 
     def assert_scaffold_json(self, target_dir: Path, expected_addons: list[str] | None = None) -> dict:
         path = target_dir / ".heroku-plugin-scaffold.json"

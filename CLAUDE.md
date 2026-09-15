@@ -191,7 +191,7 @@ Python module supports `variant` option: `fastapi` (default), `django`, `flask`.
 
 ### Supported Stacks + Addons (v1)
 
-Stacks: `node`, `python` (fastapi/django/flask), `rails`, `go`
+Stacks: `node`, `python` (fastapi/django/flask), `rails`, `go`, `website` (static HTML/CSS/JS)
 Addons: `heroku-postgresql`, `heroku-redis` (Kafka: unsupported in v1)
 Addons during anonymous deploy: available (provisioned with app)
 Addons post-claim: billable to user's account
@@ -201,7 +201,7 @@ Addons post-claim: billable to user's account
 ```json
 "policy": {
   "reference_staleness_days": 30,
-  "supported_stacks": ["node", "python", "rails", "go"],
+  "supported_stacks": ["node", "python", "rails", "go", "website"],
   "supported_addons": ["heroku-postgresql", "heroku-redis"],
   "unsupported_addons": ["kafka"]
 }

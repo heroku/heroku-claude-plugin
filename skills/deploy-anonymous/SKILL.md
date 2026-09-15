@@ -22,14 +22,14 @@ If git check fails, surface the preflight error and stop.
 ## Step 2 — Verify scaffolded app
 
 Check that the target directory exists and contains:
-- `Procfile` with `web:` process
 - `project.toml` (CNB buildpack specification — required)
-- `.heroku-plugin-scaffold.json` (source of truth for addons and secret_env_vars)
+- `.heroku-plugin-scaffold.json` (source of truth for stack, addons, and secret_env_vars)
 - `.git/` directory (git repo initialized with at least one commit)
+- `Procfile` with `web:` process — **required unless stack is `website`** (static sites use the buildpack's built-in web process)
 
-Read `.heroku-plugin-scaffold.json` now. You will need `addons` and `secret_env_vars` in later steps.
+Read `.heroku-plugin-scaffold.json` now. Check `stack`. You will need `stack`, `addons`, and `secret_env_vars` in later steps.
 
-If any file is missing, suggest running `/heroku-plugin:scaffold-app` first.
+If any required file is missing, suggest running `/heroku-plugin:scaffold-app` first.
 
 ## Step 3 — Create anonymous session
 

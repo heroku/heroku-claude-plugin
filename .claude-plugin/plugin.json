@@ -1,6 +1,6 @@
 {
   "name": "heroku-plugin",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Scaffold and deploy applications to Heroku from natural language prompts.",
   "author": {
     "name": "jwinn"
@@ -9,7 +9,7 @@
   "license": "MIT",
   "policy": {
     "reference_staleness_days": 30,
-    "supported_stacks": ["node", "python", "rails", "go"],
+    "supported_stacks": ["node", "python", "rails", "go", "website"],
     "supported_addons": ["heroku-postgresql", "heroku-redis"],
     "unsupported_addons": ["kafka"],
     "token_budget_tracking": false,
