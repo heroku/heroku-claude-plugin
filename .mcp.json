@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "mcp-portal": {
-      "type": "http",
-      "url": "https://mcp-portal.staging.herokudev.com/mcp?herokai=${HEROKAI_SECRET}"
-    }
-  }
-}
