@@ -21,13 +21,12 @@ If git check fails, surface the preflight error and stop.
 
 ## Step 2 — Verify scaffolded app
 
-Check that the target directory exists and contains:
-- `project.toml` (CNB buildpack specification — required)
-- `.heroku-plugin-scaffold.json` (source of truth for stack, addons, and secret_env_vars)
-- `.git/` directory (git repo initialized with at least one commit)
-- `Procfile` with `web:` process — **required unless stack is `website`** (static sites use the buildpack's built-in web process)
+**Read `.heroku-plugin-scaffold.json` first.** You need `stack`, `addons`, and `secret_env_vars` in later steps, and `stack` determines which other files are required.
 
-Read `.heroku-plugin-scaffold.json` now. Check `stack`. You will need `stack`, `addons`, and `secret_env_vars` in later steps.
+Then verify the target directory contains:
+- `project.toml` (CNB buildpack specification — required for all stacks)
+- `.git/` directory (git repo initialized with at least one commit)
+- `Procfile` with `web:` process — **required for all stacks except `website`**. The `heroku/static-web-server` buildpack provides the web process — **do not create a Procfile** for a website stack app.
 
 If any required file is missing, suggest running `/heroku-plugin:scaffold-app` first.
 
@@ -162,11 +161,7 @@ fresh session and app.
 
 ## Step 9 — Monitor build and finish addons (concurrent)
 
-**Apps-capable host (Claude Desktop with MCP App UI):** Call `get_deployment_status` **once**
-to show the live deployment card. The card polls build status, addon readiness, and claim status
-on its own — **do not** continue polling `get_deployment_status` or `check_claim_status` while
-the card is present. Wait for the card to signal completion, then read `web_url` and
-`expires_at` from the single response and proceed to Step 10.
+**Apps-capable host (Claude Desktop with MCP App UI):** Call `get_deployment_status` **exactly once** to surface the live deployment card. Then **stop** — do not call `get_deployment_status` again. The card handles all polling, build monitoring, addon readiness, and claim status on its own. Wait for the card to signal completion, then read `web_url` and `expires_at` from that single response and proceed to Step 10.
 
 **Without the card:** Two tracks complete after the push and are independent — poll both, then
 **join** before Step 10.
