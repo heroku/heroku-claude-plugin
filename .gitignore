@@ -8,6 +8,7 @@ __pycache__/
 evals/.tmp/
 .heroku-plugin-session.json
 .claude.json
+.mcp.json
 .heroku-plugin-token-usage.jsonl
 mcp/references/
 .coverage
