@@ -9,7 +9,7 @@
   },
   "description": "Scaffold and deploy applications to Heroku from natural language prompts.",
   "author": {
-    "name": "jwinn"
+    "name": "Heroku"
   },
   "keywords": ["heroku", "scaffold", "deployment", "docker", "buildpack"],
   "license": "MIT",

@@ -149,12 +149,12 @@ def build_docker_compose(app_name: str, addons: list[str]) -> dict:
             "environment": {
                 "POSTGRES_DB": app_name.replace("-", "_"),
                 "POSTGRES_USER": "postgres",
-                "POSTGRES_PASSWORD": "postgres",
+                "POSTGRES_PASSWORD": "postgres",  # pragma: allowlist secret — throwaway local Postgres sidecar credential
             },
             "ports": ["5432:5432"],
         }
         services["app"]["environment"]["DATABASE_URL"] = (
-            f"postgres://postgres:postgres@postgres:5432/{app_name.replace('-', '_')}?sslmode=disable"
+            f"postgres://postgres:postgres@postgres:5432/{app_name.replace('-', '_')}?sslmode=disable"  # pragma: allowlist secret
         )
         services["app"]["depends_on"].append("postgres")
 
