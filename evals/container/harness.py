@@ -130,11 +130,11 @@ class ContainerEvalCase(unittest.TestCase):
                 "environment": {
                     "POSTGRES_DB": self.app_name.replace("-", "_"),
                     "POSTGRES_USER": "postgres",
-                    "POSTGRES_PASSWORD": "postgres",
+                    "POSTGRES_PASSWORD": "postgres",  # pragma: allowlist secret — throwaway local Postgres sidecar credential
                 },
             }
             services["app"]["environment"]["DATABASE_URL"] = (
-                f"postgres://postgres:postgres@postgres:5432/{self.app_name.replace('-', '_')}?sslmode=disable"
+                f"postgres://postgres:postgres@postgres:5432/{self.app_name.replace('-', '_')}?sslmode=disable"  # pragma: allowlist secret
             )
             services["app"].setdefault("depends_on", []).append("postgres")
 
