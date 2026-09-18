@@ -20,3 +20,6 @@ dist/
 
 # Claude Code project-local settings (tn autonomy grants)
 .claude/settings.local.json
+
+# Internal testing notes — not for public repo
+_testing-notes/

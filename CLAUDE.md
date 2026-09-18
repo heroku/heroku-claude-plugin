@@ -27,7 +27,7 @@ The `UserPromptSubmit` hook fires automatically on any build or deploy prompt �
 
 Do not reproduce skill steps inline. Do not call `heroku create`, `git push heroku`, or `heroku buildpacks:add` directly — those are the skill's responsibility. Delegate via the `Skill` tool every time.
 
-The deploy path is MCP-based (`deploy_mode: "mcp"`). The `deploy-anonymous` skill calls mcp-portal tools; it does not use the Heroku CLI for app creation or git push.
+The deploy path is MCP-based. The `deploy-anonymous` skill calls mcp-portal tools; it does not use the Heroku CLI for app creation or git push.
 
 ## Commands
 
@@ -107,7 +107,7 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 
 ### MCP Deploy Path
 
-The deploy path calls the mcp-portal MCP server (`deploy_mode: "mcp"`). The server URL and auth live in `.mcp.json` at the repo root, which Claude Code reads to connect — the endpoint is not duplicated in `plugin.json`. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed), interpolated into the `.mcp.json` URL as `${HEROKAI_SECRET}`.
+The deploy path calls the mcp-portal MCP server. The server URL and auth live in `.mcp.json` at the repo root, which Claude Code reads to connect. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed), interpolated into the `.mcp.json` URL as `${HEROKAI_SECRET}`.
 
 The 8 mcp-portal tools used by the (first-)deploy flow:
 
@@ -191,7 +191,7 @@ Python module supports `variant` option: `fastapi` (default), `django`, `flask`.
 
 ### Supported Stacks + Addons (v1)
 
-Stacks: `node`, `python` (fastapi/django/flask), `rails`, `go`
+Stacks: `node`, `python` (fastapi/django/flask), `rails`, `go`, `website` (static HTML/CSS/JS)
 Addons: `heroku-postgresql`, `heroku-redis` (Kafka: unsupported in v1)
 Addons during anonymous deploy: available (provisioned with app)
 Addons post-claim: billable to user's account
@@ -201,9 +201,7 @@ Addons post-claim: billable to user's account
 ```json
 "policy": {
   "reference_staleness_days": 30,
-  "deploy_mode": "mcp",
-  "mcp_stub": false,
-  "supported_stacks": ["node", "python", "rails", "go"],
+  "supported_stacks": ["node", "python", "rails", "go", "website"],
   "supported_addons": ["heroku-postgresql", "heroku-redis"],
   "unsupported_addons": ["kafka"]
 }

@@ -5,7 +5,7 @@ Outputs a JSON summary on stdout; all progress and errors go to stderr.
 
 Usage:
   python3 scripts/scaffold.py \\
-    --name <app-name> --stack <node|python|rails|go> \\
+    --name <app-name> --stack <node|python|rails|go|website> \\
     [--dir <path>] [--addons postgres,redis] [--variant fastapi|django|flask] \\
     [--with-docker] [--dry-run]
 """
@@ -25,13 +25,14 @@ STACK_MODULES: dict = {}
 
 
 def _load_modules() -> None:
-    from heroku_glue import go, node, python, rails
+    from heroku_glue import go, node, python, rails, website
 
     STACK_MODULES.update({
         "node": node,
         "python": python,
         "rails": rails,
         "go": go,
+        "website": website,
     })
 
 
@@ -41,7 +42,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stack",
         required=True,
-        choices=["node", "python", "rails", "go"],
+        choices=["node", "python", "rails", "go", "website"],
         help="Stack to scaffold",
     )
     parser.add_argument("--dir", help="Target directory (default: ./<name>)")

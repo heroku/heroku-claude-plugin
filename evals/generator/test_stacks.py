@@ -316,5 +316,54 @@ class RailsStackEval(ScaffoldEvalCase):
             self.assert_trailing_newline(target / fname)
 
 
+# ---------------------------------------------------------------------------
+# Static Website
+# ---------------------------------------------------------------------------
+
+class WebsiteStackEval(ScaffoldEvalCase):
+    STACK = "website"
+
+    def test_contract(self) -> None:
+        target, summary = self.scaffold("hello-website")
+        self.assertEqual(summary["stack"], "website")
+        self.assertTrue((target / "project.toml").exists())
+        self.assertTrue((target / "public" / "index.html").exists())
+        self.assertFalse((target / "Procfile").exists(), "website stack must not generate a Procfile")
+        self.assert_project_toml_static(target, "heroku/static-web-server")
+        self.assert_scaffold_json(target, expected_addons=[])
+
+    def test_no_addons_accepted(self) -> None:
+        from scripts.heroku_glue import website as website_module
+        from scripts.heroku_glue.common import ScaffoldError
+
+        with self.assertRaises(ScaffoldError):
+            website_module.effective_addons({"addons": ["postgres"]})
+
+    def test_determinism(self) -> None:
+        self.assert_layer2_deterministic("det-website")
+
+    def test_project_toml_no_procfile_buildpack(self) -> None:
+        target, _ = self.scaffold("website-toml")
+        toml = (target / "project.toml").read_text(encoding="utf-8")
+        self.assertNotIn("heroku/procfile", toml, "website project.toml must not include heroku/procfile")
+        self.assertIn("heroku/static-web-server", toml)
+
+    def test_lf_newlines(self) -> None:
+        target, _ = self.scaffold("website-lf")
+        self.assert_lf_only(target / "project.toml")
+        self.assert_trailing_newline(target / "project.toml")
+        self.assert_lf_only(target / "public" / "index.html")
+        self.assert_trailing_newline(target / "public" / "index.html")
+
+    def test_scaffold_json_no_target_dir(self) -> None:
+        target, _ = self.scaffold("website-json")
+        data = self.assert_scaffold_json(target)
+        self.assertNotIn("target_dir", data, "target_dir must not be in scaffold JSON")
+
+    def test_gitignore_base_entries(self) -> None:
+        target, _ = self.scaffold("website-gitignore")
+        self.assert_gitignore_has(target, ".env", ".heroku-plugin-scaffold.json")
+
+
 if __name__ == "__main__":
     unittest.main()
