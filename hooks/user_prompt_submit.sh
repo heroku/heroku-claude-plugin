@@ -16,18 +16,11 @@ fi
 
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 
-# Quick preflight: git + heroku + docker existence only
-# TODO: remove heroku check once MCP implementation is available
+# Quick preflight: git + docker existence only
 MISSING=()
 
 if ! command -v git &>/dev/null; then
   MISSING+=("git")
-fi
-
-if ! command -v heroku &>/dev/null; then
-  MISSING+=("heroku CLI")
-elif ! timeout 3 heroku whoami &>/dev/null 2>&1; then
-  MISSING+=("heroku login (run: heroku login)")
 fi
 
 if ! command -v docker &>/dev/null; then
