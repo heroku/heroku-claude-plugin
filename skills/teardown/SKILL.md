@@ -45,18 +45,17 @@ And stop.
 
 ## Step 3 — Destroy the Heroku app
 
-```bash
-heroku destroy --app <app-name> --confirm <app-name>
-```
-
-If the app doesn't exist on Heroku (non-zero exit), surface:
+The mcp-portal does not expose an app destroy tool. Direct the user to the Heroku dashboard:
 
 ```
-⚠ App '<app-name>' not found on Heroku — it may have already been deleted.
-Cleaning up local session state anyway.
+To permanently destroy the app, visit:
+
+  https://dashboard.heroku.com/apps/<app-name>/settings
+
+Scroll to the bottom and click "Delete app". Once done, let me know and I'll clean up local state.
 ```
 
-And continue to Step 4.
+Wait for the user to confirm they've deleted the app (or that they want to skip), then continue to Step 4.
 
 ## Step 4 — Clean up local session state
 
