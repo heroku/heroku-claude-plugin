@@ -1,7 +1,7 @@
 {
   "name": "heroku-plugin-canary",
   "owner": {
-    "name": "jwinn"
+    "name": "Heroku"
   },
   "plugins": [
     {
