@@ -28,6 +28,7 @@ STACK_GITIGNORE_MARKERS: dict[str, str] = {
     "node": "node_modules/",
     "go": "bin/",
     "rails": "log/",
+    "website": ".heroku-plugin-scaffold.json",
 }
 
 
@@ -172,7 +173,7 @@ def run_e2e(stack: str = "python", variant: str = "fastapi", keep: bool = False)
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="E2E build-and-deploy eval (stub mode).")
-    parser.add_argument("--stack", default="python", choices=["node", "python", "rails", "go"])
+    parser.add_argument("--stack", default="python", choices=["node", "python", "rails", "go", "website"])
     parser.add_argument("--variant", default="fastapi")
     parser.add_argument("--keep", action="store_true", help="Keep generated artifacts")
     args = parser.parse_args()

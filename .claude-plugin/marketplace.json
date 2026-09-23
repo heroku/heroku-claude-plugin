@@ -1,0 +1,13 @@
+{
+  "name": "heroku-plugin-canary",
+  "owner": {
+    "name": "Heroku"
+  },
+  "plugins": [
+    {
+      "name": "heroku-plugin",
+      "source": ".",
+      "description": "Scaffold and deploy applications to Heroku from natural language prompts."
+    }
+  ]
+}

@@ -21,15 +21,14 @@ If git check fails, surface the preflight error and stop.
 
 ## Step 2 — Verify scaffolded app
 
-Check that the target directory exists and contains:
-- `Procfile` with `web:` process
-- `project.toml` (CNB buildpack specification — required)
-- `.heroku-plugin-scaffold.json` (source of truth for addons and secret_env_vars)
+**Read `.heroku-plugin-scaffold.json` first.** You need `stack`, `addons`, and `secret_env_vars` in later steps, and `stack` determines which other files are required.
+
+Then verify the target directory contains:
+- `project.toml` (CNB buildpack specification — required for all stacks)
 - `.git/` directory (git repo initialized with at least one commit)
+- `Procfile` with `web:` process — **required for all stacks except `website`**. The `heroku/static-web-server` buildpack provides the web process — **do not create a Procfile** for a website stack app.
 
-Read `.heroku-plugin-scaffold.json` now. You will need `addons` and `secret_env_vars` in later steps.
-
-If any file is missing, suggest running `/heroku-plugin:scaffold-app` first.
+If any required file is missing, suggest running `/heroku-plugin:scaffold-app` first.
 
 ## Step 3 — Create anonymous session
 
@@ -39,7 +38,14 @@ Input: {}
 Output: { conversation_id, tos_url, tos_status }
 ```
 
-Surface the ToS URL to the user:
+Store `conversation_id` — thread it into every subsequent MCP call.
+
+**Apps-capable host (Claude Desktop with MCP App UI):** The server returns a terms card
+automatically. When the card appears, **do not** repeat the raw `tos_url` or `conversation_id`
+to the user — the card handles acceptance and will notify you when the deploy can continue.
+Proceed to Step 5 once the card signals acceptance.
+
+**Without the card:** Surface the ToS URL to the user:
 
 ```
 Before we deploy, you need to accept the Heroku Terms of Service:
@@ -49,9 +55,11 @@ Before we deploy, you need to accept the Heroku Terms of Service:
 Open that link in your browser and accept. I'll wait.
 ```
 
-Store `conversation_id` — thread it into every subsequent MCP call.
+Then proceed to Step 4.
 
-## Step 4 — Poll for ToS acceptance
+## Step 4 — Poll for ToS acceptance [skip if card handled it]
+
+> Skip this step if an Apps-capable terms card appeared in Step 3 and already confirmed acceptance.
 
 ```
 Tool: check_anonymous_session_state
@@ -136,44 +144,27 @@ continue without the addon or stop.
 ## Step 8 — Push source
 
 Push **immediately** after Step 7 — this is the critical path against the credential clock; do
-not wait on addon readiness (that is Step 9). The git push triggers the Heroku CNB build. Use
-`git_credentials.token` for HTTP basic auth:
+not wait on addon readiness (that is Step 9).
 
-```bash
-cd <target_dir>
-git push https://heroku:<git_credentials.token>@<git_url_host_and_path> HEAD:main 2>&1
-```
+**Use the git push command from the `create_preview_app` tool description exactly — including
+any push options it specifies (e.g. `-o heroku.action=async`).** Do not substitute or simplify
+the command. The tool description is the authoritative source; this skill does not override it.
 
-Reconstruct the authenticated URL from `git_url`:
-- `git_url` example: `https://git.heroku.com/floating-plateau-8391.git`
-- Authenticated form: `https://heroku:<token>@git.heroku.com/floating-plateau-8391.git`
+The push output is unstructured text from `git push` — there is no structured `build_id` field.
+Capture the full stdout and parse it: the build id appears in the `*** Images (...)` block near
+the end of the output as `builds:<uuid>` — regex `builds:([0-9a-f-]{36})`. `build_id` is
+optional — `get_deployment_status` defaults to the latest build for the app when omitted.
 
-Capture the full push output. The build id is **not** emitted as a `Build UUID:` line. It
-appears embedded in the CNB image path in the `*** Images (...)` block near the end of the
-push, in the form `builds:<uuid>` — e.g.:
-- `remote:       builds.heroku.com/<app_uuid>/builds:e0828838-c667-4acd-8e3e-c15fd602333f`
-
-Extract the 36-char UUID that follows `builds:` (regex `builds:([0-9a-f-]{36})`) and store it
-as `build_id` for Step 9. `build_id` is **optional** — `get_deployment_status` defaults to
-the latest build for the app when it is omitted, so if the pattern does not match, proceed
-to Step 9 without it.
-
-> Verified against a real staging push (2026-08-28). The build id's downstream acceptance by
-> `get_deployment_status` is unconfirmed — it was returning "try again shortly" errors at
-> probe time.
-
-If the push fails with a credential error, the one-shot token from Step 5 has likely lapsed
-(it expires ~5 min after `create_preview_app`). Surface the full output and stop; re-running
-the deploy mints a fresh session and app. (Minting fresh push creds for an *existing* preview
-app — the edit → redeploy loop — is `get_preview_app_git_credentials`' job, which belongs to a
-future redeploy flow, not this first-deploy skill.)
-
-**Fallback for build_id:** If the push output does not contain a parseable build ID,
-omit it from `get_deployment_status` — the server will use the latest build for the app.
+If the push fails with a credential error, the token from Step 5 has likely lapsed (~5 min
+after `create_preview_app`). Surface the full output and stop — re-running the deploy mints a
+fresh session and app.
 
 ## Step 9 — Monitor build and finish addons (concurrent)
 
-Two things complete after the push and are independent — poll both, then **join** before Step 10.
+**Apps-capable host (Claude Desktop with MCP App UI):** Call `get_deployment_status` **exactly once** to surface the live deployment card. Then **stop** — do not call `get_deployment_status` again. The card handles all polling, build monitoring, addon readiness, and claim status on its own. Wait for the card to signal completion, then read `web_url` and `expires_at` from that single response and proceed to Step 10.
+
+**Without the card:** Two tracks complete after the push and are independent — poll both, then
+**join** before Step 10.
 
 **Track A — build:**
 
@@ -229,7 +220,10 @@ Write to `.heroku-plugin-session.json` in target_dir:
 
 ## Step 11 — Surface result to user
 
-Call `share_in_browser` to get a fresh single-use preview URL:
+**Apps-capable host:** The live card already surfaced Preview and Claim actions — **do not**
+repeat the raw URLs. Confirm to the user that the deploy succeeded and the card has the links.
+
+**Without the card:** Call `share_in_browser` to get a fresh single-use preview URL:
 
 ```
 Tool: share_in_browser
@@ -251,6 +245,11 @@ Then surface both links:
 Do not surface the raw `*.herokuapp.com` URL for either link.
 
 ## Step 12 — Monitor claim (background)
+
+**Apps-capable host:** The live card handles claim monitoring — **do not** poll
+`check_claim_status` while the card is present.
+
+**Without the card:**
 
 ```
 Tool: check_claim_status
