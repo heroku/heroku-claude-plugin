@@ -150,10 +150,10 @@ not wait on addon readiness (that is Step 9).
 any push options it specifies (e.g. `-o heroku.action=async`).** Do not substitute or simplify
 the command. The tool description is the authoritative source; this skill does not override it.
 
-If the push response includes a `build_id` directly, store it for Step 9. Otherwise capture
-the full push output and attempt to parse it: the build id may appear in the `*** Images (...)`
-block as `builds:<uuid>` — regex `builds:([0-9a-f-]{36})`. `build_id` is optional —
-`get_deployment_status` defaults to the latest build for the app when omitted.
+The push output is unstructured text from `git push` — there is no structured `build_id` field.
+Capture the full stdout and parse it: the build id appears in the `*** Images (...)` block near
+the end of the output as `builds:<uuid>` — regex `builds:([0-9a-f-]{36})`. `build_id` is
+optional — `get_deployment_status` defaults to the latest build for the app when omitted.
 
 If the push fails with a credential error, the token from Step 5 has likely lapsed (~5 min
 after `create_preview_app`). Surface the full output and stop — re-running the deploy mints a

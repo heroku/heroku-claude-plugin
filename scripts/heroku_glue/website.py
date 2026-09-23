@@ -9,6 +9,10 @@ DISPLAY_NAME = "Static Website"
 REQUIRED_TOOLS: list[tuple[str, str]] = []
 DEFAULT_ADDONS: list[str] = []
 
+# Intentionally not using common.build_project_toml() — that helper always appends
+# heroku/procfile, which must not appear for static sites (the buildpack owns the
+# web process). The website project.toml is structurally different from all other
+# stacks and is kept separate to avoid conditional logic in the shared helper.
 _PROJECT_TOML = """\
 [_]
 schema-version = "0.2"
