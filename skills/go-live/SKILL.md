@@ -3,55 +3,31 @@ name: go-live
 description: >-
   Open or share a deployed Heroku app. Use when the user says "open the app",
   "show me the app", "make it public", "go live", "share the URL", or similar.
-  With the CLI deploy path, apps are publicly accessible immediately after deploy.
 argument-hint: "[app-name]"
-allowed-tools: Bash, Read
+allowed-tools: Read
 ---
 
 # Go Live
 
-<!-- TODO: When MCP anonymous deploy is available, this skill will need to call
-     update_app (authMode: 'user', post-claim) to set public_routing=true.
-     For the CLI deploy path, apps are public by default — no routing toggle needed. -->
-
 ## Step 1 — Load context
 
-Get `app_name` and `app_url` from:
-1. Provided arguments
-2. `.heroku-plugin-session.json` in the current directory
+Read `.heroku-plugin-session.json` in the current directory. You need:
+- `claim_url`
+- `expires_at`
 
-## Step 2 — Verify app is deployed
-
-```bash
-heroku ps --app <app-name>
+If the file is missing or `claim_url` is absent, tell the user:
 ```
-
-If `web.1` is not `up`, suggest running `/heroku-plugin:check-deploy-status` first.
-
-## Step 3 — Confirm the URL
-
-```bash
-heroku info --app <app-name>
+No active session found. Run /heroku-plugin:deploy-anonymous first to deploy an app.
 ```
+And stop.
 
-Parse `Web URL:` from output.
-
-## Step 4 — Open in browser
-
-```bash
-heroku open --app <app-name>
-```
-
-## Step 5 — Surface to user
+## Step 2 — Surface to user
 
 ```
-✓ App is live at: <app_url>
+✓ Your app is ready.
 
-  heroku open --app <app-name>     ← open in browser
-  heroku logs --tail --app <app-name>  ← watch logs
-  heroku ps --app <app-name>           ← check dyno status
-  https://dashboard.heroku.com/apps/<app-name>  ← dashboard
+  Open:   <claim_url>
+
+  That link lets you view the running app and claim it to your Heroku account.
+  The claim window closes at <expires_at>.
 ```
-
-Note: Apps deployed via the Heroku CLI are publicly accessible by default.
-No additional routing toggle is required.

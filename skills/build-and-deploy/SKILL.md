@@ -7,7 +7,7 @@ description: >-
   build a SaaS app and host it on Heroku", or any prompt that implies both building
   and deploying. This orchestrates: preflight → scaffold-app → deploy → check-deploy-status.
 argument-hint: "[description of the app]"
-allowed-tools: Bash, Read, Task
+allowed-tools: Bash, Read
 ---
 
 # Build and Deploy
@@ -33,12 +33,10 @@ If resuming: skip completed steps based on session state fields present
 
 ## Step 2 — Run preflight
 
+Invoke the preflight skill using the `Skill` tool:
+
 ```
-Task(
-  subagent_type: "preflight",
-  description: "Run preflight checks",
-  prompt: "Run preflight checks. Return JSON result with git and docker status."
-)
+Skill: heroku-plugin:preflight
 ```
 
 Gate on: `git: true`. Stop if it fails.
@@ -46,30 +44,24 @@ Note `docker` availability — pass to scaffold-app via `with_docker`.
 
 ## Step 3 — Scaffold the app
 
+Invoke the scaffold-app skill using the `Skill` tool:
+
 ```
-Task(
-  subagent_type: "scaffold-app",
-  description: "Scaffold Heroku app from user requirements",
-  prompt: "Scaffold an app based on the user's description: '<user_description>'.
-           docker_available: <true|false>.
-           Return JSON with app_name, stack, variant, target_dir, addons, docker_available."
-)
+Skill: heroku-plugin:scaffold-app
+Args: <user_description>
 ```
 
 Parse result. Save to session state.
 
 ## Step 4 — Deploy to Heroku (MCP)
 
+Invoke the deploy-anonymous skill using the `Skill` tool:
+
 ```
-Task(
-  subagent_type: "deploy-anonymous",
-  description: "Deploy scaffolded app to Heroku via mcp-portal",
-  prompt: "Deploy app '<app_name>' at '<target_dir>' to Heroku.
-           Stack: <stack>. Addons: <addons>."
-)
+Skill: heroku-plugin:deploy-anonymous
 ```
 
-This task creates an anonymous session, creates the Heroku app via `create_preview_app`,
+This skill creates an anonymous session, creates the Heroku app via `create_preview_app`,
 sets secrets (CLI hybrid if needed) and kicks off addon provisioning, pushes code via git
 promptly (the git token is short-lived), then monitors the build and addon readiness
 concurrently via `get_deployment_status` / `get_addon_status`.

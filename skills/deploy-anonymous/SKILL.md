@@ -93,24 +93,29 @@ Output: { app_uuid, web_url, git_url, git_credentials: { token, expires_at }, mc
 > build) is deferred to Step 9 and polled concurrently, **after** the push. Never let addon
 > readiness polling block the push.
 
-## Step 6 — Set secrets [CLI — hybrid step]
+## Step 6 — Set secrets [CLI — known gap]
 
-Read `secret_env_vars` from `.heroku-plugin-scaffold.json`. If empty, skip this step.
+Read `secret_env_vars` from `.heroku-plugin-scaffold.json`. **If empty, skip this step entirely** — most stacks (node, python/fastapi, go, website) have no secrets and never reach here.
 
-Set these **before** the push — the build and release phases may consume them (e.g. Rails
-`assets:precompile` needs `RAILS_MASTER_KEY`/`SECRET_KEY_BASE`; Django `collectstatic` needs
-`DJANGO_SECRET_KEY`). Each is a fast call, so it costs only seconds against the credential window.
+If non-empty (Django, Rails): the mcp-portal has no `set_config_vars` tool. The Heroku CLI is required for this step. If the user does not have the CLI installed or is not logged in, surface:
 
-For each name, generate and set a secret:
+```
+⚠ This app needs secret config vars set before the build, but the mcp-portal does not
+  support setting config vars. The Heroku CLI is required for this step.
+
+  Install: https://devcenter.heroku.com/articles/heroku-cli
+  Then run: heroku login
+
+  Let me know when you're ready and I'll continue.
+```
+
+Wait for confirmation, then set each secret before the push:
 
 ```bash
 heroku config:set <NAME>=$(python3 -c 'import secrets; print(secrets.token_hex(32))') --app <app_uuid>
 ```
 
-The `app_uuid` works as the `--app` identifier. This step requires the Heroku CLI and an
-active `heroku login` session.
-
-Common values: `DJANGO_SECRET_KEY` (Django), `RAILS_MASTER_KEY` (Rails).
+The `app_uuid` works as the `--app` identifier. Common values: `DJANGO_SECRET_KEY` (Django), `RAILS_MASTER_KEY` (Rails).
 
 ## Step 7 — Kick off addon provisioning (do not wait)
 
@@ -159,24 +164,28 @@ If the push fails with a credential error, the token from Step 5 has likely laps
 after `create_preview_app`). Surface the full output and stop — re-running the deploy mints a
 fresh session and app.
 
-## Step 9 — Monitor build and finish addons (concurrent)
+## Step 9 — Monitor build and finish addons
 
-**Apps-capable host (Claude Desktop with MCP App UI):** Call `get_deployment_status` **exactly once** to surface the live deployment card. Then **stop** — do not call `get_deployment_status` again. The card handles all polling, build monitoring, addon readiness, and claim status on its own. Wait for the card to signal completion, then read `web_url` and `expires_at` from that single response and proceed to Step 10.
+> **Read this branch decision first before doing anything else in this step.**
 
-**Without the card:** Two tracks complete after the push and are independent — poll both, then
-**join** before Step 10.
+**Apps-capable host (Claude Desktop with MCP App UI card present):**
+Call `get_deployment_status` **exactly once**. The card appears and takes over — it polls build status, addon readiness, and claim status automatically. **Do not call `get_deployment_status` again. Do not poll.** Wait for the card to signal completion, then read `web_url` and `expires_at` from that single response and go directly to Step 10.
+
+---
+
+**Without the card:** Two tracks run concurrently after the push — join both before Step 10.
 
 **Track A — build:**
 
 ```
 Tool: get_deployment_status
-Input: { conversation_id, app_uuid, build_id }   # conversation_id + app_uuid required; build_id optional (omit = latest build)
+Input: { conversation_id, app_uuid, build_id }   # build_id optional (omit = latest build)
 Output: { web_url, expires_at, build: { done, failed, log }, database }
 ```
 
-Poll every 10 seconds until `build.done === true`. Show progress:
+Poll every 30 seconds until `build.done === true`. Show progress:
 ```
-Building... (checking every 10s)
+Building... (checking every 30s)
 ```
 
 If `build.failed === true`:
@@ -195,11 +204,9 @@ Input: { conversation_id, app_uuid, addon_id }   # all three required
 Output: { ready: boolean, config_vars }
 ```
 
-Poll every 5 seconds until `ready: true`. This runs concurrently with Track A — the two do not
-depend on each other.
+Poll every 30 seconds until `ready: true`. Runs concurrently with Track A.
 
-**Join:** do not proceed to Step 10 until `build.done === true` **and** every addon reports
-`ready: true`.
+**Join:** do not proceed to Step 10 until `build.done === true` **and** every addon reports `ready: true`.
 
 Store `web_url` and `expires_at` from `get_deployment_status` — `web_url` is the **claim portal URL**, needed for Steps 10 and 11.
 
