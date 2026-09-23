@@ -164,24 +164,28 @@ If the push fails with a credential error, the token from Step 5 has likely laps
 after `create_preview_app`). Surface the full output and stop — re-running the deploy mints a
 fresh session and app.
 
-## Step 9 — Monitor build and finish addons (concurrent)
+## Step 9 — Monitor build and finish addons
 
-**Apps-capable host (Claude Desktop with MCP App UI):** Call `get_deployment_status` **exactly once** to surface the live deployment card. Then **stop** — do not call `get_deployment_status` again. The card handles all polling, build monitoring, addon readiness, and claim status on its own. Wait for the card to signal completion, then read `web_url` and `expires_at` from that single response and proceed to Step 10.
+> **Read this branch decision first before doing anything else in this step.**
 
-**Without the card:** Two tracks complete after the push and are independent — poll both, then
-**join** before Step 10.
+**Apps-capable host (Claude Desktop with MCP App UI card present):**
+Call `get_deployment_status` **exactly once**. The card appears and takes over — it polls build status, addon readiness, and claim status automatically. **Do not call `get_deployment_status` again. Do not poll.** Wait for the card to signal completion, then read `web_url` and `expires_at` from that single response and go directly to Step 10.
+
+---
+
+**Without the card:** Two tracks run concurrently after the push — join both before Step 10.
 
 **Track A — build:**
 
 ```
 Tool: get_deployment_status
-Input: { conversation_id, app_uuid, build_id }   # conversation_id + app_uuid required; build_id optional (omit = latest build)
+Input: { conversation_id, app_uuid, build_id }   # build_id optional (omit = latest build)
 Output: { web_url, expires_at, build: { done, failed, log }, database }
 ```
 
-Poll every 10 seconds until `build.done === true`. Show progress:
+Poll every 30 seconds until `build.done === true`. Show progress:
 ```
-Building... (checking every 10s)
+Building... (checking every 30s)
 ```
 
 If `build.failed === true`:
@@ -200,11 +204,9 @@ Input: { conversation_id, app_uuid, addon_id }   # all three required
 Output: { ready: boolean, config_vars }
 ```
 
-Poll every 5 seconds until `ready: true`. This runs concurrently with Track A — the two do not
-depend on each other.
+Poll every 30 seconds until `ready: true`. Runs concurrently with Track A.
 
-**Join:** do not proceed to Step 10 until `build.done === true` **and** every addon reports
-`ready: true`.
+**Join:** do not proceed to Step 10 until `build.done === true` **and** every addon reports `ready: true`.
 
 Store `web_url` and `expires_at` from `get_deployment_status` — `web_url` is the **claim portal URL**, needed for Steps 10 and 11.
 
