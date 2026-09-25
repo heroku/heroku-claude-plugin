@@ -5,7 +5,7 @@ description: >-
   "push to Heroku", "make it live", "ship it", or similar. Uses the mcp-portal
   MCP server to create a preview app, provision addons, and deploy via git push.
 argument-hint: "[target-dir]"
-allowed-tools: Bash, Read, Task, mcp__plugin_heroku-plugin_mcp-portal__create_anonymous_session, mcp__plugin_heroku-plugin_mcp-portal__check_anonymous_session_state, mcp__plugin_heroku-plugin_mcp-portal__create_preview_app, mcp__plugin_heroku-plugin_mcp-portal__create_addon, mcp__plugin_heroku-plugin_mcp-portal__get_addon_status, mcp__plugin_heroku-plugin_mcp-portal__get_deployment_status, mcp__plugin_heroku-plugin_mcp-portal__share_in_browser, mcp__plugin_heroku-plugin_mcp-portal__check_claim_status
+allowed-tools: Bash, Read
 ---
 
 # Deploy to Heroku (Anonymous Preview)

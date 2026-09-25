@@ -7,7 +7,7 @@ description: >-
   On failure, delegates diagnosis and repair to the `diagnose-and-fix` sub-agent
   (explicit Task delegation — LLM role is interpreting novel log text).
 argument-hint: "[app-uuid]"
-allowed-tools: Bash, Read, Task, mcp__plugin_heroku-plugin_mcp-portal__get_deployment_status
+allowed-tools: Bash, Read
 ---
 
 # Check Deploy Status
