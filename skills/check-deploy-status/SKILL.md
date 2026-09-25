@@ -4,10 +4,8 @@ description: >-
   Check Heroku deployment status and verify the app is running. Use after
   deploying to Heroku, or when the user asks "is my app deployed?", "check
   the build", "what happened to my deploy?", "are there any errors?", or similar.
-  On failure, delegates diagnosis and repair to the `diagnose-and-fix` sub-agent
-  (explicit Task delegation — LLM role is interpreting novel log text).
 argument-hint: "[app-uuid]"
-allowed-tools: Bash, Read, Task, mcp__plugin_heroku-plugin_mcp-portal__get_deployment_status
+allowed-tools: Bash, Read
 ---
 
 # Check Deploy Status
@@ -65,56 +63,22 @@ Surface result to user:
   Open that link to view your app and claim it as your own Heroku account.
 ```
 
-## Step 4b — Deployment failed (self-heal loop, max 3 attempts)
+## Step 4b — Deployment failed
 
-<!-- Why a sub-agent call here: the LLM's irreducible role is interpreting novel
-     log text to determine root cause and apply a targeted fix. Making the
-     delegation explicit (rather than embedding it in prose) improves
-     testability — the Task boundary can be exercised in isolation — and
-     reliability, because the sub-agent receives focused context with a
-     structured return contract. -->
-
-Initialize `attempt = 1`. While `attempt <= 3`:
-
-1. Collect the log excerpt from `build.log` (last 50–100 lines).
-
-2. Call the `diagnose-and-fix` sub-agent:
-
-   ```
-   Task(
-     subagent_type: "diagnose-and-fix",
-     description: "Diagnose and fix Heroku deploy failure",
-     prompt: "Diagnose the following Heroku deploy failure and apply a fix.
-              App UUID: '<app_uuid>' at '<target_dir>'. Stack: '<stack>'.
-              Log excerpt:
-              <log lines>
-
-              Reference ${CLAUDE_PLUGIN_ROOT}/references/heroku/deploy-contract.md
-              for known error patterns.
-              Reference ${CLAUDE_PLUGIN_ROOT}/references/stacks/<stack>.md
-              for stack-specific gotchas.
-
-              Apply the fix, commit with message 'fix: <diagnosis>', and return:
-              { \"fixed\": true|false, \"diagnosis\": \"...\", \"fix_applied\": \"...\" }"
-   )
-   ```
-
-3. If `result.fixed == true`: re-run `deploy-anonymous` from Step 8 (git push).
-   Increment `attempt`.
-
-4. If `result.fixed == false`: increment `attempt` and loop.
-
-After 3 failed attempts (or if the sub-agent cannot fix):
+Surface the build log and a diagnosis to the user:
 
 ```
-✗ Deployment failed after 3 attempts.
+✗ Deployment failed.
 
-Last error: <diagnosis>
-Relevant logs:
-  <log lines>
+Build log (last 30 lines):
+  <tail of build.log>
 
-Suggested next step: <specific fix>
+Diagnosis: <root cause from log — e.g. missing dependency, bad Procfile, release-phase error>
+
+Suggested fix: <one specific action — e.g. "Add 'gunicorn' to requirements.txt and redeploy">
 ```
+
+Do not attempt an automatic fix or retry. Surface the information and let the user decide next steps.
 
 ## Step 4c — App deployed but not responding
 
