@@ -179,7 +179,7 @@ python3 scripts/preflight.py --dry-run
 skills/          Atomic skills + build-and-deploy orchestrator
 scripts/         scaffold.py, preflight.py, heroku_glue/ stack modules
 references/      Local Heroku docs (seeded, staleness-checked)
-hooks/           UserPromptSubmit + PreCompact hook scripts
+hooks/           UserPromptSubmit + PreCompact hook scripts + hooks.json registration
 evals/           Generator, container, and skill evals
-.claude-plugin/  plugin.json manifest + hooks.json registration
+.claude-plugin/  plugin.json manifest + marketplace.json
 ```
