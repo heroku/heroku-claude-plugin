@@ -161,6 +161,16 @@ Container evals (requires Docker, CI on PR + main):
 python3 -m unittest discover -s evals/container -v
 ```
 
+Scenario evals (real E2E against Heroku — see below for prerequisites):
+
+```bash
+# Validate scenarios corpus
+python3 evals/scenarios/scenario_eval.py --validate
+
+# List available scenarios
+python3 evals/scenarios/scenario_eval.py --list
+```
+
 Scaffold dry-run:
 
 ```bash
@@ -171,6 +181,59 @@ Preflight dry-run:
 
 ```bash
 python3 scripts/preflight.py --dry-run
+```
+
+### Scenario Evals
+
+Scenario evals are real end-to-end runs against Heroku. Each scenario in `evals/scenarios/scenarios.json` pairs a natural language prompt with a stack, optional addons, and 14–15 explicit assertions. The workflow runs the full `build-and-deploy` skill — scaffold → deploy → assert → teardown — and checks every assertion against the live app before tearing it down.
+
+Up to 5 scenarios run in parallel as nested agents, each with its own Claude Code session.
+
+**Scenarios:**
+
+| ID | Stack | Addons |
+|----|-------|--------|
+| `smoke-node-supplies-list` | node | postgres |
+| `saas-node-express-postgres` | node | postgres |
+| `saas-python-fastapi-postgres` | python (fastapi) | postgres |
+| `saas-python-django-postgres-redis` | python (django) | postgres, redis |
+| `saas-go-postgres` | go | postgres |
+| `saas-rails-postgres` | rails | postgres |
+| `demo-slides-node` | node | none |
+
+**Assertions per scenario include:**
+- Skill confirms requirements and presents a plan before writing code
+- UI implemented (HTML page or template layer — not API-only)
+- Database seeded with demo data visible on the deployed app
+- Test coverage ≥90%
+- All Heroku glue files present (`Procfile`, `app.json`, `docker-compose.yml`)
+- App deploys and returns HTTP 200
+- Teardown completes and session saved to moot
+
+**Prerequisites:**
+
+1. `HEROKAI_SECRET` set in environment
+2. Launch Claude Code with the plugin and skip permissions (agents will write files, run CLI commands, and deploy real apps):
+   ```bash
+   HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin \
+     --dangerously-skip-permissions
+   ```
+3. moot server running — session records are saved after each scenario
+
+**Running:**
+
+```bash
+# All scenarios (up to 5 concurrent) — run inside Claude Code:
+/scenario-eval
+
+# Single scenario:
+/scenario-eval {"scenario": "saas-go-postgres"}
+```
+
+Results (assertion counts, token spend, duration) are saved to moot for cross-run comparison:
+
+```bash
+moot search "scenario eval"
 ```
 
 ### Project Structure
