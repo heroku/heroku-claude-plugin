@@ -3,13 +3,11 @@
     "content": [
       {
         "type": "text",
-        "text": "Opened anonymous session (conversation_id=stub-conv-abc123). Direct the user to accept the terms of use at https://claim-canary.heroku.com/tos/stub-conv-abc123."
+        "text": "Opened anonymous session (conversation_id=stub-conv-abc123)."
       }
     ],
     "structuredContent": {
-      "conversation_id": "stub-conv-abc123",
-      "tos_url": "https://claim-canary.heroku.com/tos/stub-conv-abc123",
-      "tos_status": "pending"
+      "conversation_id": "stub-conv-abc123"
     }
   },
   "isError": false

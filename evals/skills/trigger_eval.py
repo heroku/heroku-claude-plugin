@@ -162,7 +162,7 @@ SKILL_KEYWORD_MAP: dict[str, list[str]] = {
     "check-deploy-status": [
         # Use phrases specific enough not to match "Deploy my app" or "Build a new app"
         "deployed", "what happened", "deployment going", "the build",
-        "build status", "deploy status",
+        "build status", "deploy status", "build failed", "crashed", "diagnose",
     ],
     "generate-access-code": [
         "share", "access code", "sharing code", "colleague", "generate a",
