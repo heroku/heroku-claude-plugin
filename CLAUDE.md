@@ -109,27 +109,27 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 
 The deploy path calls the mcp-portal MCP server. The server URL and auth live in `.mcp.json` at the repo root, which Claude Code reads to connect. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed), interpolated into the `.mcp.json` URL as `${HEROKAI_SECRET}`.
 
-The 8 mcp-portal tools used by the (first-)deploy flow:
+The 7 mcp-portal tools used by the (first-)deploy flow:
 
 | Tool | Purpose |
 |------|---------|
-| `create_anonymous_session` | Start a session, get `conversation_id` + ToS URL |
-| `check_anonymous_session_state` | Poll until `tos_status: "accepted"` |
+| `create_anonymous_session` | Start a session, get `conversation_id` |
 | `create_preview_app` | Create app on Heroku with CNB stack; returns `app_uuid`, `git_url`, `git_credentials` |
-| `create_addon` | Provision an addon (postgres, redis) |
-| `get_addon_status` | Poll addon until `ready: true` |
+| `create_addon` | Provision an addon (postgres, redis); input: `{ app_uuid, service }` |
+| `get_addon_status` | Poll addon until `ready: true`; input: `{ app_uuid, addon_id }` |
 | `get_deployment_status` | Poll build status; returns claim portal `web_url` |
 | `share_in_browser` | Get a fresh single-use preview URL after build succeeds |
 | `check_claim_status` | Poll until app is claimed or expired |
 
 > `get_build_output` was removed from the active flow — `get_deployment_status` carries the build log.
+> `check_anonymous_session_state` was removed server-side (2026-10-08 rebase) — ToS acceptance is no longer part of the deploy flow.
 
 A 9th server tool, `get_preview_app_git_credentials`, mints fresh git push creds for an **already-provisioned** preview app — its purpose is the edit → redeploy loop (pushing a revision after the ~5-min `create_preview_app` creds have expired). It is **not** part of the first-deploy flow above and has no caller yet; it belongs to a future redeploy skill.
 
 **Current status:** The plugin talks to the **staging** server (`.mcp.json`), and staging provisions for real — the old "stubbed server-side / `git_url` returns `git.invalid`" note (from the canary era) no longer holds. Verified live on 2026-08-28:
 
-- `create_anonymous_session`, `check_anonymous_session_state`, `create_preview_app` — confirmed end-to-end. `create_preview_app` returns a real `git_url` (`https://git.staging.herokudev.com/<app>.git`) and real RS256 JWT `git_credentials` (~5-min lifetime) + `mcp_credentials` (~1-hr lifetime). Response shape matches this table and the `deploy-anonymous` Step 5 doc.
-- `get_preview_app_git_credentials` — **not operational on staging**: returns "could not reach the deploy service … needs operator attention." Because it fails at the service layer, the `app_id` argument (assumed to be `app_uuid`) is **still unverified**. Under investigation with the mcp-portal team; do not rely on the Step 8 re-mint path until it's confirmed working.
+- `create_anonymous_session`, `create_preview_app` — confirmed end-to-end. `create_preview_app` returns a real `git_url` (`https://git.staging.herokudev.com/<app>.git`) and real RS256 JWT `git_credentials` (~5-min lifetime) + `mcp_credentials` (~1-hr lifetime). Response shape matches this table and the `deploy-anonymous` Step 4 doc.
+- `get_preview_app_git_credentials` — **not operational on staging**: returns "could not reach the deploy service … needs operator attention." Because it fails at the service layer, the `app_id` argument (assumed to be `app_uuid`) is **still unverified**. Under investigation with the mcp-portal team; do not rely on the Step 7 re-mint path until it's confirmed working.
 - `create_addon`, `get_addon_status`, `get_deployment_status`, `check_claim_status` — not yet exercised live end-to-end (require a real git push first). `check_claim_status` confirmed working on staging (2026-08-28). `get_build_output` removed from the active deploy flow.
 
 See `mcp/mcp-portal-readiness.md` for remaining server-side work items.
