@@ -5,7 +5,8 @@ integration in the plugin. Pass to the mcp-portal team; implement in order so ea
 can be tested independently as it lands on staging.
 
 **Active endpoint:** `https://mcp-portal.staging.herokudev.com/mcp?herokai=${HEROKAI_SECRET}` (per `.mcp.json`)  
-**Last validated:** 2026-08-28 — live staging probe; see below
+**Last validated:** 2026-08-28 — live staging probe; see below  
+**Updated:** 2026-10-08 — mcp-portal rebase landed; ToS flow removed server-side (items 1–2 superseded)
 
 ---
 
@@ -14,6 +15,10 @@ can be tested independently as it lands on staging.
 The plugin now points at **staging** (not canary), and staging provisions for real — items 1–4
 below are effectively **done**. Per-tool results from a real end-to-end run (session → ToS →
 `create_preview_app` → git push → CNB build succeeded, app deployed):
+
+> **Note (2026-10-08):** The ToS flow (`check_anonymous_session_state`, `tos_url`) was removed
+> in a subsequent mcp-portal rebase. Items 1 and 2 below are superseded — the deploy flow now
+> goes directly from `create_anonymous_session` to `create_preview_app` with no ToS step.
 
 | Tool | Result |
 |---|---|
@@ -140,8 +145,8 @@ Status as of the 2026-08-28 staging probe (was all-stubbed on 2026-08-25 canary)
 
 | # | Feature | Blocks | Completed | Current status (staging) |
 |---|---|---|---|---|
-| 1 | Persistent session store | Everything | ☑ | Works — state survives across requests |
-| 2 | ToS browser callback | Items 3–7 | ☑ | Works — acceptance flips to `accepted` |
+| 1 | Persistent session store | ~~Everything~~ | ~~☑~~ | **Superseded** — ToS flow removed 2026-10-08; session store no longer needed for ToS state |
+| 2 | ToS browser callback | ~~Items 3–7~~ | ~~☑~~ | **Superseded** — `check_anonymous_session_state` removed server-side; ToS gate no longer exists |
 | 3 | Real app provisioning (`create_preview_app`) | Items 4–7 | ☑ | Real app + `git_url` (no longer `git.invalid`) |
 | 4 | Git credentials (real JWT) + `build_id` format | Items 5–7 | ☑ | Real JWT creds; `build_id` format confirmed (`builds:<uuid>`) |
 | 5 | Build polling (`get_build_output`, `get_deployment_status`) | Item 7 | ☐ | **DOWN** — "try again shortly" (blocks claim URL) |
