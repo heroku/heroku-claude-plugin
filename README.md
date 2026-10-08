@@ -121,9 +121,6 @@ The `teardown` skill will:
 1. Confirm the app name before destroying anything
 2. Destroy the Heroku app and all its addons
 3. Clear local session state (`.heroku-plugin-session.json`)
-4. Save a session record to moot — a run steps memory and one memory per issue encountered, both tagged `heroku build-and-deploy` for easy retrieval
-
-Previous runs are searchable with: `moot search "heroku build-and-deploy"`
 
 Then start the next run in a fresh directory:
 
@@ -208,7 +205,7 @@ Up to 5 scenarios run in parallel as nested agents, each with its own Claude Cod
 - Test coverage ≥90%
 - All Heroku glue files present (`Procfile`, `app.json`, `docker-compose.yml`)
 - App deploys and returns HTTP 200
-- Teardown completes and session saved to moot
+- Teardown completes successfully
 
 **Prerequisites:**
 
@@ -218,7 +215,6 @@ Up to 5 scenarios run in parallel as nested agents, each with its own Claude Cod
    HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin \
      --dangerously-skip-permissions
    ```
-3. moot server running — session records are saved after each scenario
 
 **Running:**
 
@@ -230,11 +226,7 @@ Up to 5 scenarios run in parallel as nested agents, each with its own Claude Cod
 /scenario-eval {"scenario": "saas-go-postgres"}
 ```
 
-Results (assertion counts, token spend, duration) are saved to moot for cross-run comparison:
-
-```bash
-moot search "scenario eval"
-```
+Each run prints a summary report with assertion counts, token spend, and duration per scenario.
 
 ### Project Structure
 
