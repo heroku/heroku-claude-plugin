@@ -106,47 +106,40 @@ def run_e2e(stack: str = "python", variant: str = "fastapi", keep: bool = False)
         print("\n[3] Create anonymous session (stub)...")
         session_stub = _read_stub("create_anonymous_session.json")
         print(f"  ✓ conversation_id: {session_stub['conversation_id']}")
-        print(f"  ✓ tos_status: {session_stub['tos_status']}")
-        print(f"  ✓ tos_url: {session_stub['tos_url']}")
 
-        # Step 4: Stub — ToS accepted
-        print("\n[4] Check anonymous session state (stub)...")
-        tos_stub = _read_stub("check_anonymous_session_state.json")
-        print(f"  ✓ tos_status: {tos_stub['tos_status']}")
-
-        # Step 5: Stub — create preview app
-        print("\n[5] Create preview app (stub)...")
+        # Step 4: Stub — create preview app
+        print("\n[4] Create preview app (stub)...")
         app_stub = _read_stub("create_preview_app.json")
         print(f"  ✓ app_uuid: {app_stub['app_uuid']}")
         print(f"  ✓ git_url: {app_stub['git_url']}")
         print(f"  ✓ git_credentials.expires_at: {app_stub['git_credentials']['expires_at']}")
 
-        # Step 6: Stub — addon provisioning
-        print("\n[6] Create addon (stub)...")
+        # Step 5: Stub — addon provisioning
+        print("\n[5] Create addon (stub)...")
         addon_stub = _read_stub("create_addon.json")
         print(f"  ✓ addon_id: {addon_stub['addon_id']}")
         print(f"  ✓ state: {addon_stub['state']}")
 
-        print("\n[6b] Get addon status (stub)...")
+        print("\n[5b] Get addon status (stub)...")
         addon_status_stub = _read_stub("get_addon_status.json")
         print(f"  ✓ ready: {addon_status_stub['ready']}")
         print(f"  ✓ config_vars: {addon_status_stub['config_vars']}")
 
-        # Step 7: Stub — deployment status (post-push)
-        print("\n[7] Get deployment status (stub)...")
+        # Step 6 (post-push): Stub — deployment status
+        print("\n[6] Get deployment status (stub)...")
         deploy_stub = _read_stub("get_deployment_status.json")
         print(f"  ✓ build.done: {deploy_stub['build']['done']}")
         print(f"  ✓ build.failed: {deploy_stub['build']['failed']}")
         print(f"  ✓ web_url: {deploy_stub['web_url']}")
 
-        # Step 8: Stub — claim status
-        print("\n[8] Check claim status (stub)...")
+        # Step 9 (background): Stub — claim status
+        print("\n[9] Check claim status (stub)...")
         claim_stub = _read_stub("check_claim_status.json")
         print(f"  ✓ claimed: {claim_stub['claimed']}")
         print(f"  ✓ expired: {claim_stub['expired']}")
 
-        # Step 9: Verify session state schema
-        print("\n[9] Verify session state schema...")
+        # Verify session state schema
+        print("\n[verify] Verify session state schema...")
         session_state = {
             "conversation_id": session_stub["conversation_id"],
             "app_uuid": app_stub["app_uuid"],
