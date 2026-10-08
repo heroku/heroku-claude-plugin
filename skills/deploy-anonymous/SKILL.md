@@ -129,13 +129,11 @@ release phase runs.
 
 ```
 Tool: create_addon
-Input: { conversation_id, app_uuid, service }
+Input: { app_uuid, service }
 Output: { id, app, plan, state, config_vars }
 ```
 
-`conversation_id` selects the anonymous provisioning path — it is required here (along with
-`app_uuid` and the allowlisted `service` slug). Store each `id` — Step 9 polls it for
-readiness as `addon_id`.
+Store each `id` — Step 9 polls it for readiness as `addon_id`.
 
 **Service slug mapping** (pass exactly these values as `service`):
 | `.heroku-plugin-scaffold.json` slug | MCP `service` value |
@@ -200,7 +198,7 @@ If `build.failed === true`:
 
 ```
 Tool: get_addon_status
-Input: { conversation_id, app_uuid, addon_id }   # all three required
+Input: { app_uuid, addon_id }
 Output: { ready: boolean, config_vars }
 ```
 
