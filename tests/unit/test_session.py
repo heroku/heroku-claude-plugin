@@ -150,3 +150,42 @@ class TestCli:
         assert cli(tmp_path, "set", f"app_name={value}").returncode == 0
         assert not (tmp_path / "MARK").exists()
         assert json.loads(cli(tmp_path, "show").stdout)["session"]["app_name"] == value
+
+
+class TestClearGuard:
+    def test_matching_app_id_clears(self, tmp_path):
+        session.update(session.session_path(tmp_path), app_id="a")
+        out = session.clear_session(session.session_path(tmp_path), "a")
+        assert out["cleared"] is True and "reason" not in out
+        assert not session.session_path(tmp_path).exists()
+
+    def test_mismatched_app_id_leaves_file(self, tmp_path):
+        path = session.session_path(tmp_path)
+        session.update(path, app_id="a")
+        out = session.clear_session(path, "b")
+        assert out["cleared"] is False and "does not match" in out["reason"]
+        assert session.load(path) == {"app_id": "a"}
+
+    def test_guard_with_no_app_id_in_file_does_not_clear(self, tmp_path):
+        path = session.session_path(tmp_path)
+        session.update(path, stack="go")
+        assert session.clear_session(path, "a")["cleared"] is False
+        assert path.exists()
+
+    def test_missing_file_reports_reason(self, tmp_path):
+        out = session.clear_session(session.session_path(tmp_path))
+        assert out["cleared"] is False and out["reason"] == "no session file"
+
+    def test_unguarded_clear_still_removes_any_session(self, tmp_path):
+        path = session.session_path(tmp_path)
+        session.update(path, app_id="a")
+        assert session.clear_session(path)["cleared"] is True
+
+    def test_cli_if_app_id(self, tmp_path):
+        cli(tmp_path, "set", "app_id=a")
+        miss = json.loads(cli(tmp_path, "clear", "--if-app-id", "b").stdout)
+        assert miss["cleared"] is False
+        assert json.loads(cli(tmp_path, "show").stdout)["exists"] is True
+        hit = json.loads(cli(tmp_path, "clear", "--if-app-id", "a").stdout)
+        assert hit["cleared"] is True
+        assert json.loads(cli(tmp_path, "show").stdout)["exists"] is False

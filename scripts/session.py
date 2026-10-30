@@ -6,7 +6,7 @@ file always has the same shape and a malformed or hostile file is only ever pars
 
   python3 scripts/session.py show [--dir DIR]
   python3 scripts/session.py set KEY=VALUE [KEY=VALUE ...] [--dir DIR]
-  python3 scripts/session.py clear [--dir DIR]
+  python3 scripts/session.py clear [--if-app-id ID] [--dir DIR]
   python3 scripts/session.py checkpoint [--dir DIR]      # PreCompact hook
 
 Every subcommand prints one JSON object on stdout. Exit codes: 0 ok, 2 bad input.
@@ -160,6 +160,21 @@ def clear(path: Path) -> bool:
         return False
 
 
+def clear_session(path: Path, if_app_id: str | None = None) -> dict:
+    """CLI `clear`: remove the file, optionally only when it belongs to `if_app_id`.
+
+    The guard keeps a skill that just finished with one app from wiping the state of another.
+    """
+    out: dict = {"path": str(path), "cleared": False}
+    if if_app_id is not None and load(path).get("app_id") != if_app_id:
+        out["reason"] = "session app_id does not match"
+    elif clear(path):
+        out["cleared"] = True
+    else:
+        out["reason"] = "no session file"
+    return out
+
+
 def checkpoint(path: Path, env: dict[str, str] | None = None, now: datetime.datetime | None = None) -> dict:
     """Merge env overrides into the file and stamp it. Used by the PreCompact hook."""
     env = os.environ if env is None else env
@@ -189,8 +204,14 @@ def _parse_set(pairs: list[str]) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Plugin session state helper.")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    for name in ("show", "clear", "checkpoint"):
+    for name in ("show", "checkpoint"):
         sub.add_parser(name).add_argument("--dir", default=None)
+    clear_p = sub.add_parser("clear")
+    clear_p.add_argument("--dir", default=None)
+    clear_p.add_argument(
+        "--if-app-id", default=None, metavar="ID",
+        help="only clear when the session file belongs to this app_id",
+    )
     set_p = sub.add_parser("set")
     set_p.add_argument("pairs", nargs="+", metavar="KEY=VALUE")
     set_p.add_argument("--dir", default=None)
@@ -203,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "set":
             out = {"path": str(path), "session": update(path, **_parse_set(args.pairs))}
         elif args.cmd == "clear":
-            out = {"path": str(path), "cleared": clear(path)}
+            out = clear_session(path, args.if_app_id)
         else:
             checkpoint(path)
             out = {"systemMessage": f"Heroku session state checkpointed to {path.name}"}
