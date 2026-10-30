@@ -78,7 +78,7 @@ class TestBehavior:
     def test_existing_fields_preserved(self, tmp_path):
         existing = {
             "app_name": "old",
-            "session_id": "s1",
+            "app_id": "app-1",
             "claim_url": "https://example.test/claim",
             "timer_start": "t",
             "access_codes": ["a", "b"],
@@ -90,6 +90,32 @@ class TestBehavior:
         state = read_session(tmp_path)
         for key, value in existing.items():
             assert state[key] == value
+
+    def test_app_id_env_creates_session_and_overrides_file(self, tmp_path):
+        run_hook(tmp_path, HEROKU_APP_ID="env-app")
+        assert read_session(tmp_path)["app_id"] == "env-app"
+        (tmp_path / SESSION).write_text(json.dumps({"app_id": "old"}))
+        run_hook(tmp_path, HEROKU_APP_ID="new")
+        assert read_session(tmp_path)["app_id"] == "new"
+
+    def test_retired_session_keys_are_dropped(self, tmp_path):
+        (tmp_path / SESSION).write_text(
+            json.dumps({"app_id": "a", "conversation_id": "c", "app_uuid": "u", "session_id": "s"})
+        )
+        run_hook(tmp_path)
+        state = read_session(tmp_path)
+        assert state["app_id"] == "a"
+        for gone in ("conversation_id", "app_uuid", "session_id"):
+            assert gone not in state
+
+    def test_deploy_skill_fields_survive_compaction(self, tmp_path):
+        (tmp_path / SESSION).write_text(
+            json.dumps({"app_id": "a", "expires_at": 4070908800000, "deployed_at": "2026-10-30T00:00:00Z"})
+        )
+        run_hook(tmp_path)
+        state = read_session(tmp_path)
+        assert state["expires_at"] == 4070908800000
+        assert state["deployed_at"] == "2026-10-30T00:00:00Z"
 
     def test_env_overrides_file(self, tmp_path):
         (tmp_path / SESSION).write_text(json.dumps({"app_name": "old"}))
