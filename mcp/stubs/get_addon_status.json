@@ -7,12 +7,19 @@
       }
     ],
     "structuredContent": {
+      "monitoring": {
+        "owner": "assistant",
+        "support": "unsupported",
+        "instruction": "Poll get_addon_status every few seconds until ready is true."
+      },
       "addon_id": "stub-addon-id-pg",
       "name": "postgresql-cylindrical-12345",
       "plan": "heroku-postgresql:essential-0",
       "state": "provisioned",
       "ready": true,
-      "config_vars": ["DATABASE_URL"]
+      "config_vars": [
+        "DATABASE_URL"
+      ]
     }
   },
   "isError": false

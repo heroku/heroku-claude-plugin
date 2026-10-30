@@ -3,11 +3,11 @@
     "content": [
       {
         "type": "text",
-        "text": "Opened anonymous session (conversation_id=stub-conv-abc123)."
+        "text": "Discarded preview app a1b2c3d4-e5f6-7890-abcd-ef1234567890."
       }
     ],
     "structuredContent": {
-      "conversation_id": "stub-conv-abc123"
+      "app_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     }
   },
   "isError": false

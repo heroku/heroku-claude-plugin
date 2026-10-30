@@ -1,0 +1,17 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Preview link issued."
+      }
+    ],
+    "structuredContent": {
+      "authorization_url": "https://preview.staging.herokudev.com/authorize?code=stub-single-use",
+      "expires_in": 300,
+      "preview_link": "[Preview the app](https://preview.staging.herokudev.com/authorize?code=stub-single-use)",
+      "instruction": "Share the complete preview_link. It is single-use; do not fetch it."
+    }
+  },
+  "isError": false
+}

@@ -1,0 +1,19 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Set 1 config var."
+      }
+    ],
+    "structuredContent": {
+      "config_vars": {
+        "DJANGO_SECRET_KEY": "****"
+      },
+      "updated": [
+        "DJANGO_SECRET_KEY"
+      ]
+    }
+  },
+  "isError": false
+}

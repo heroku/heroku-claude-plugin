@@ -3,12 +3,17 @@
     "content": [
       {
         "type": "text",
-        "text": "App a1b2c3d4-e5f6-7890-abcd-ef1234567890 has been claimed."
+        "text": "App a1b2c3d4-e5f6-7890-abcd-ef1234567890 is still pending."
       }
     ],
     "structuredContent": {
-      "app_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "claimed": true,
+      "monitoring": {
+        "owner": "assistant",
+        "support": "unsupported",
+        "instruction": "Poll check_claim_status every few seconds until claimed or expired is true."
+      },
+      "app_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "claimed": false,
       "expired": false
     }
   },

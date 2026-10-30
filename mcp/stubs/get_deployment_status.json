@@ -3,19 +3,35 @@
     "content": [
       {
         "type": "text",
-        "text": "{\"app_uuid\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\", \"web_url\": \"https://claim-canary.heroku.com/preview/a1b2c3d4-e5f6-7890-abcd-ef1234567890\", \"expires_at\": 1756227600000, \"build\": {\"done\": true, \"failed\": false, \"log\": \"-----> Node.js app detected\\n-----> Build succeeded\"}, \"database\": null}"
+        "text": "Build succeeded."
       }
     ],
     "structuredContent": {
-      "app_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "web_url": "https://claim-canary.heroku.com/preview/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "expires_at": 1756227600000,
-      "build": {
-        "done": true,
-        "failed": false,
-        "log": "-----> Node.js app detected\n-----> Build succeeded"
+      "monitoring": {
+        "owner": "assistant",
+        "support": "unsupported",
+        "instruction": "Poll get_deployment_status every few seconds until build.done is true."
       },
-      "database": null
+      "claim_link": "[Claim the app](https://claim.staging.herokudev.com/start/a1b2c3d4-e5f6-7890-abcd-ef1234567890)",
+      "app_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "web_url": "https://claim.staging.herokudev.com/start/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "expires_at": 4070908800000,
+      "build": {
+        "status": "succeeded",
+        "done": true,
+        "failed": false
+      },
+      "addons": [
+        {
+          "name": "postgresql-cylindrical-12345",
+          "plan": "heroku-postgresql:essential-0",
+          "state": "provisioned",
+          "ready": true,
+          "config_vars": [
+            "DATABASE_URL"
+          ]
+        }
+      ]
     }
   },
   "isError": false
