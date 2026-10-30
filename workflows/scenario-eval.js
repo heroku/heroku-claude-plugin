@@ -25,6 +25,7 @@ const corpus = await agent(
   `${PLUGIN_DIR}/skills/scaffold-app/SKILL.md, ` +
   `${PLUGIN_DIR}/skills/deploy-anonymous/SKILL.md, ` +
   `${PLUGIN_DIR}/skills/check-deploy-status/SKILL.md, ` +
+  `${PLUGIN_DIR}/skills/discard-preview-app/SKILL.md, ` +
   `${PLUGIN_DIR}/references/heroku/build-standards.md, ` +
   `${PLUGIN_DIR}/evals/scenarios/report-template.md. ` +
   `Return a JSON object with keys: scenarios (array), skills (object keyed by skill name), buildStandards (string), reportTemplate (string).`,
@@ -120,6 +121,7 @@ const results = await parallel(
     const scaffoldContent = corpus.skills["scaffold-app"] || "";
     const deployContent = corpus.skills["deploy-anonymous"] || "";
     const statusContent = corpus.skills["check-deploy-status"] || "";
+    const discardContent = corpus.skills["discard-preview-app"] || "";
     const standards = corpus.buildStandards || "";
     const reportTemplate = corpus.reportTemplate || "";
 
@@ -161,6 +163,9 @@ ${deployContent}
 ### check-deploy-status
 ${statusContent}
 
+### discard-preview-app
+${discardContent}
+
 ## Report template (use exactly this format for the run report you return in `notes`)
 
 ${reportTemplate}
@@ -183,8 +188,10 @@ ${reportTemplate}
    teardown skill is not used here). Then clear the session file with
    `python3 ${PLUGIN_DIR}/scripts/session.py clear --dir <scaffold dir>`. Set cleanup_succeeded to
    whether discard returned the app_id and the file was cleared. If the prompt says to leave the app
-   running, skip the discard, keep the session file, and set cleanup_succeeded to true. If the app was already claimed
-   or expired, record that in notes and set cleanup_succeeded to false.
+   running, skip the discard, keep the session file, and set cleanup_succeeded to true. If the scenario itself already
+   discarded the app, do not discard it again: confirm it with session.py and set cleanup_succeeded
+   to true. If the app was already claimed or expired, record that in notes and set
+   cleanup_succeeded to false.
 
 5. Before deleting the scaffold directory, read the per-skill token log if it exists:
    \`cat /tmp/scenario-${scenario.id}-<run-id>/.heroku-plugin-token-usage.jsonl 2>/dev/null || echo "[]"\`

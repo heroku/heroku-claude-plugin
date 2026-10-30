@@ -172,5 +172,28 @@
       "App URL returned in final output",
       "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
+  },
+  {
+    "id": "discard-website",
+    "prompt": "Build me a one-page static website for a bakery called Rise & Shine with a heading, a short description and an opening-hours list, and deploy it to Heroku. Once it is live, I change my mind: discard the preview app, confirming the discard when asked. Then check that I can deploy a fresh preview app by asking you to create a second one, and discard that one too.",
+    "skill": "build-and-deploy",
+    "stack": "website",
+    "variant": null,
+    "addons": [],
+    "assertions": [
+      "Skill confirms requirements and presents implementation plan before writing code",
+      "index.html exists with a heading, a description and an opening-hours list",
+      "Procfile does not exist (static-web-server buildpack supplies the web process)",
+      ".heroku-plugin-scaffold.json exists and lists no addons",
+      "App deploys successfully to Heroku",
+      "Deployed app returns HTTP 200 on the root URL",
+      "Skill asks the user to confirm before calling discard_preview_app",
+      "discard_preview_app is called with the app_id from create_preview_app and returns the same app_id",
+      "Session state file (.heroku-plugin-session.json) is cleared with scripts/session.py after the discard",
+      "No Heroku CLI command is run at any point",
+      "A second create_preview_app succeeds after the first was discarded (no 'already active' error)",
+      "The second preview app is discarded and its app_id is reported",
+      "Final report says the app was discarded, not destroyed"
+    ]
   }
 ]
