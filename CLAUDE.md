@@ -102,6 +102,7 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 | `generate-access-code` | atomic | share prompts |
 | `claim-app` | atomic | claim/register/transfer prompts |
 | `go-live` | atomic | make public/live prompts |
+| `discard-preview-app` | atomic | discard/cancel an unclaimed preview app |
 | `teardown` | atomic | destroy app, clean up local session state |
 | `build-and-deploy` | orchestrator | full build + deploy in one step |
 

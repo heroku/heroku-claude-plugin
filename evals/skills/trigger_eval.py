@@ -128,6 +128,21 @@ SKILL_TRIGGERS: dict[str, dict] = {
             "Build a new app",
         ],
     },
+    "discard-preview-app": {
+        "positive": [
+            "Discard the preview app",
+            "Throw away this preview",
+            "Cancel the preview, I want to start over",
+            "Abandon this deploy",
+            "A preview app is already active, discard it",
+        ],
+        "negative": [
+            "Deploy my app",
+            "Claim this app",
+            "Make it public",
+            "Check the build",
+        ],
+    },
     "build-and-deploy": {
         "positive": [
             "Build me a SaaS app and deploy it to Heroku",
@@ -172,6 +187,9 @@ SKILL_KEYWORD_MAP: dict[str, list[str]] = {
     ],
     "go-live": [
         "live", "public", "go-live", "world",
+    ],
+    "discard-preview-app": [
+        "discard", "throw away", "cancel the preview", "abandon", "start over",
     ],
     "build-and-deploy": [
         # Multi-word phrases that appear in positives but not in the negatives

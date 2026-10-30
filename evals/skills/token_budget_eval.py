@@ -261,6 +261,25 @@ SAMPLE_RESPONSES: dict[str, list[dict]] = {
             ),
         },
     ],
+    "discard-preview-app": [
+        {
+            "label": "normal — discarded",
+            "text": (
+                "✓ Preview app a1b2c3d4-e5f6-7890-abcd-ef1234567890 discarded.\n"
+                "  Session state: cleared\n\n"
+                "Run a new deploy whenever you're ready."
+            ),
+        },
+        {
+            "label": "edge case — already claimed",
+            "text": (
+                "The preview app is not available to be discarded.\n\n"
+                "It has already been claimed, discarded or has expired. A claimed app belongs to "
+                "your Heroku account, so manage or delete it there.\n"
+                "Session state: left in place — session app_id does not match"
+            ),
+        },
+    ],
     "build-and-deploy": [
         {
             "label": "normal — build and deploy completed",
