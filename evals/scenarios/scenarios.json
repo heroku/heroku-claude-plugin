@@ -13,7 +13,7 @@
       "All 5 slides are present: title, current functionality, scenario testing, scenario output table, demo",
       "Scenario output table contains all 5 stack rows with assertions, tokens, and duration columns",
       "Procfile exists with 'web: node' command",
-      "app.json exists with no addons (static app requires none)",
+      ".heroku-plugin-scaffold.json exists and lists no addons (static app requires none)",
       "package.json exists with a start script",
       ".gitignore contains node_modules/",
       "Pre-commit checklist was run and all items passed",
@@ -37,7 +37,7 @@
       "A supplies table exists in the database with at least name and category columns",
       "Database is seeded with demo supply items visible on the page",
       "Procfile exists with 'web: node' command",
-      "app.json exists and includes heroku-postgresql addon",
+      ".heroku-plugin-scaffold.json lists the heroku-postgresql addon",
       "package.json exists with a start script",
       ".gitignore contains node_modules/",
       "Pre-commit checklist was run and all items passed",
@@ -45,7 +45,7 @@
       "App deploys successfully to Heroku",
       "Deployed app returns HTTP 200 on the root URL",
       "App URL returned in final output",
-      "Teardown completes and session saved to moot"
+      "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
   },
   {
@@ -61,7 +61,7 @@
       "At least one database model relevant to the domain (supplier, order, product, or similar)",
       "Database is seeded with demo data so the deployed app is immediately usable",
       "Procfile exists with 'web: node' command",
-      "app.json exists and includes heroku-postgresql addon",
+      ".heroku-plugin-scaffold.json lists the heroku-postgresql addon",
       "package.json exists with a start script",
       ".gitignore contains node_modules/",
       "docker-compose.yml exists for local dev",
@@ -70,7 +70,7 @@
       "App deploys successfully to Heroku",
       "Deployed app returns HTTP 200 on the root URL",
       "App URL returned in final output",
-      "Teardown completes and session saved to moot"
+      "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
   },
   {
@@ -86,7 +86,7 @@
       "At least one database model relevant to the domain (supplier, order, product, or similar)",
       "Database is seeded with demo data so the deployed app is immediately usable",
       "Procfile exists with 'web: uvicorn' command",
-      "app.json exists and includes heroku-postgresql addon",
+      ".heroku-plugin-scaffold.json lists the heroku-postgresql addon",
       "requirements.txt exists and contains fastapi",
       ".gitignore contains __pycache__/",
       "docker-compose.yml exists for local dev",
@@ -95,7 +95,7 @@
       "App deploys successfully to Heroku",
       "Deployed app returns HTTP 200 on the root URL",
       "App URL returned in final output",
-      "Teardown completes and session saved to moot"
+      "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
   },
   {
@@ -111,7 +111,7 @@
       "At least one database model relevant to the domain (supplier, order, product, or similar)",
       "Database is seeded with demo data so the deployed app is immediately usable",
       "Procfile exists with 'web: gunicorn' command",
-      "app.json exists and includes both heroku-postgresql and heroku-redis addons",
+      ".heroku-plugin-scaffold.json lists both heroku-postgresql and heroku-redis addons",
       "requirements.txt exists and contains django",
       ".gitignore contains __pycache__/",
       "docker-compose.yml exists for local dev",
@@ -120,7 +120,7 @@
       "App deploys successfully to Heroku",
       "Deployed app returns HTTP 200 on the root URL",
       "App URL returned in final output",
-      "Teardown completes and session saved to moot"
+      "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
   },
   {
@@ -136,7 +136,7 @@
       "At least one database model relevant to the domain (supplier, order, product, or similar)",
       "Database is seeded with demo data so the deployed app is immediately usable",
       "Procfile exists with 'web:' command pointing to compiled binary",
-      "app.json exists and includes heroku-postgresql addon",
+      ".heroku-plugin-scaffold.json lists the heroku-postgresql addon",
       "go.mod exists",
       ".gitignore contains bin/",
       "docker-compose.yml exists for local dev",
@@ -145,7 +145,7 @@
       "App deploys successfully to Heroku",
       "Deployed app returns HTTP 200 on the root URL",
       "App URL returned in final output",
-      "Teardown completes and session saved to moot"
+      "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
   },
   {
@@ -161,7 +161,7 @@
       "At least one database model relevant to the domain (supplier, order, product, or similar)",
       "Database is seeded with demo data so the deployed app is immediately usable",
       "Procfile exists with 'web: bundle exec puma' command",
-      "app.json exists and includes heroku-postgresql addon",
+      ".heroku-plugin-scaffold.json lists the heroku-postgresql addon",
       "Gemfile exists and contains rails",
       ".gitignore contains log/",
       "docker-compose.yml exists for local dev",
@@ -170,7 +170,7 @@
       "App deploys successfully to Heroku",
       "Deployed app returns HTTP 200 on the root URL",
       "App URL returned in final output",
-      "Teardown completes and session saved to moot"
+      "Preview app is discarded at cleanup (discard_preview_app returns the app_id) and the session file is cleared"
     ]
   }
 ]

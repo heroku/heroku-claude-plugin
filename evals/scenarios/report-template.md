@@ -1,13 +1,14 @@
 # Scenario Eval Report Template
 
-Every scenario agent MUST save exactly two moot memories at teardown (Step 5 of the teardown
-skill). Use the formats below verbatim — consistent structure lets us compare runs side by side.
+Every scenario agent MUST produce two reports at the end of its run and return them in its
+result `notes`. Use the formats below verbatim — consistent structure lets us compare runs side
+by side.
 
 ---
 
-## Memory 1 — Run steps (`--kind context --scope user`)
+## Report 1 — Run steps
 
-**Title format:** `heroku-plugin scenario: <scenario-id> (<date>)`
+**Title:** `heroku-plugin scenario: <scenario-id> (<date>)`
 
 **Keywords:** `heroku scenario-eval <stack> <addons-space-separated>`
 
@@ -24,14 +25,14 @@ Assertions (<N passed> / <total>):
 ✅ Pre-commit checklist was run and all items passed
 ✅ Test coverage is >=90% — actual: <N>%
 ✅ Procfile exists with correct web command
-✅ app.json exists with correct addons
+✅ .heroku-plugin-scaffold.json lists the correct addons
 ✅ Stack dependency file exists (<package.json|requirements.txt|go.mod|Gemfile>)
 ✅ .gitignore contains correct entry for stack
 ✅ docker-compose.yml exists for local dev
 ✅ App deploys successfully to Heroku
 ✅ Deployed app returns HTTP 200 on the root URL — confirmed: <yes|no>
 ✅ App URL returned in final output — URL: <url>
-✅ Teardown completes and session saved to moot
+✅ Session state holds app_id and claim_url, and is cleared at cleanup
 
 Token usage: <skill>: <N> tokens / <budget> budget (<pct>%)
 Subagent usage: subagent_tokens=<N> tool_uses=<N>
@@ -43,18 +44,18 @@ Step-by-step:
 2. scaffold-app — <summary: stack confirmed, notable decisions, workarounds>
 3. deploy-anonymous — <summary: buildpacks, addons, push result>
 4. check-deploy-status — <web.1 status, HTTP check result>
-5. teardown — <app destroyed, session cleared>
+5. cleanup — <what was cleaned up, and whether the preview app was discarded or left to expire>
 
-Notable issues: <none | brief description — cross-reference to learning memories by ID>
+Notable issues: <none | brief description — cross-reference to the issue reports by title>
 ```
 
 ---
 
-## Memory 2 — Issues (`--kind learning --scope user`) — one per distinct issue
+## Report 2 — Issues — one per distinct issue
 
-Only create this memory if something went wrong or deviated from expected behavior.
+Only create this report if something went wrong or deviated from expected behavior.
 
-**Title format:** `heroku-plugin scenario: <scenario-id>: <short issue description>`
+**Title:** `heroku-plugin scenario: <scenario-id>: <short issue description>`
 
 **Keywords:** `heroku scenario-eval <stack> <issue-keywords>`
 
@@ -68,12 +69,7 @@ Root cause: <one sentence>
 Workaround used: <what the agent did to continue>
 Recommended fix: <file path and what should change>
 Assertion failed: <assertion text>
-Cross-reference: <title of run steps memory> id=<moot-id>
+Cross-reference: <title of run steps report>
 ```
 
 ---
-
-## If moot is unavailable
-
-Print the full report content to stdout using the formats above so it appears in the workflow
-summary. Do not block teardown or skip the report — surface it inline instead.

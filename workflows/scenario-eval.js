@@ -1,7 +1,7 @@
 export const meta = {
   name: "scenario-eval",
   description: "Fan out one agent per scenario, execute full build-and-deploy, collect structured results",
-  whenToUse: "Run from a session launched with: HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin --allowedTools \"Bash,Read,Write,Edit,Task\". Each scenario deploys a real Heroku app and runs teardown. Requires an authenticated Heroku account and moot-server running.",
+  whenToUse: "Run from a session launched with: HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin --allowedTools \"Bash,Read,Write,Edit,Task\". Each scenario deploys a real preview app through the mcp-portal and discards it afterwards. Requires the mcp-portal connector authenticated with a verified Heroku login.",
   phases: [
     { title: "Load", detail: "Read scenarios.json and skill files" },
     { title: "Execute", detail: "Fan out one agent per scenario in worktree isolation" },
@@ -16,7 +16,7 @@ phase("Load");
 
 const scenarioFilter = args && args.scenario ? args.scenario : null;
 
-const PLUGIN_DIR = "/Users/jwinn/src/heroku-plugin";
+const PLUGIN_DIR = "/Users/jwinn/src/heroku-claude-plugin";
 
 const corpus = await agent(
   `Read the file at ${PLUGIN_DIR}/evals/scenarios/scenarios.json and return its full contents as a JSON array. ` +
@@ -25,7 +25,6 @@ const corpus = await agent(
   `${PLUGIN_DIR}/skills/scaffold-app/SKILL.md, ` +
   `${PLUGIN_DIR}/skills/deploy-anonymous/SKILL.md, ` +
   `${PLUGIN_DIR}/skills/check-deploy-status/SKILL.md, ` +
-  `${PLUGIN_DIR}/skills/teardown/SKILL.md, ` +
   `${PLUGIN_DIR}/references/heroku/build-standards.md, ` +
   `${PLUGIN_DIR}/evals/scenarios/report-template.md. ` +
   `Return a JSON object with keys: scenarios (array), skills (object keyed by skill name), buildStandards (string), reportTemplate (string).`,
@@ -65,7 +64,7 @@ phase("Execute");
 
 const RESULT_SCHEMA = {
   type: "object",
-  required: ["scenario_id", "stack", "assertions", "app_name", "app_url", "deploy_succeeded", "teardown_succeeded", "moot_saved", "token_usage", "notes"],
+  required: ["scenario_id", "stack", "assertions", "app_name", "app_url", "deploy_succeeded", "cleanup_succeeded", "token_usage", "notes"],
   properties: {
     scenario_id: { type: "string" },
     stack: { type: "string" },
@@ -84,8 +83,7 @@ const RESULT_SCHEMA = {
     app_name: { type: "string" },
     app_url: { type: "string" },
     deploy_succeeded: { type: "boolean" },
-    teardown_succeeded: { type: "boolean" },
-    moot_saved: { type: "boolean" },
+    cleanup_succeeded: { type: "boolean" },
     token_usage: {
       type: "object",
       properties: {
@@ -122,7 +120,6 @@ const results = await parallel(
     const scaffoldContent = corpus.skills["scaffold-app"] || "";
     const deployContent = corpus.skills["deploy-anonymous"] || "";
     const statusContent = corpus.skills["check-deploy-status"] || "";
-    const teardownContent = corpus.skills["teardown"] || "";
     const standards = corpus.buildStandards || "";
     const reportTemplate = corpus.reportTemplate || "";
 
@@ -164,10 +161,7 @@ ${deployContent}
 ### check-deploy-status
 ${statusContent}
 
-### teardown
-${teardownContent}
-
-## Report template (use exactly this format when saving moot memories at teardown)
+## Report template (use exactly this format for the run report you return in `notes`)
 
 ${reportTemplate}
 
@@ -185,8 +179,12 @@ ${reportTemplate}
 3. After the skill completes (success or failure), evaluate each assertion as passed or failed
    based on what actually happened. Be honest — if a step was skipped or failed, mark it failed.
 
-4. Run the teardown skill to destroy the Heroku app and save the session record to moot.
-   If moot is unavailable, note it and continue.
+4. Unless the scenario prompt says to leave the app running, clean up by calling the `discard_preview_app` MCP tool with the scenario's `app_id` (the
+   teardown skill is not used here). Then clear the session file with
+   `python3 ${PLUGIN_DIR}/scripts/session.py clear --dir <scaffold dir>`. Set cleanup_succeeded to
+   whether discard returned the app_id and the file was cleared. If the prompt says to leave the app
+   running, skip the discard, keep the session file, and set cleanup_succeeded to true. If the app was already claimed
+   or expired, record that in notes and set cleanup_succeeded to false.
 
 5. Before deleting the scaffold directory, read the per-skill token log if it exists:
    \`cat /tmp/scenario-${scenario.id}-<run-id>/.heroku-plugin-token-usage.jsonl 2>/dev/null || echo "[]"\`
@@ -198,7 +196,7 @@ ${reportTemplate}
    Do this regardless of whether the scenario succeeded or failed.
 
 7. Return the structured result. Include the app name, app URL (empty string if deploy failed),
-   whether deploy and teardown succeeded, whether moot saved, an estimated output token count
+   whether deploy and cleanup succeeded, an estimated output token count
    for the full build-and-deploy skill execution, the token_breakdown array from step 5, and
    any notes about deviations or issues.
    Do NOT include a duration_ms field — the orchestrator measures wall-clock time externally.
@@ -246,8 +244,7 @@ const summary = {
     id: r.scenario_id,
     stack: r.stack,
     deploy_succeeded: r.deploy_succeeded,
-    teardown_succeeded: r.teardown_succeeded,
-    moot_saved: r.moot_saved,
+    cleanup_succeeded: r.cleanup_succeeded,
     app_url: r.app_url,
     token_usage: r.token_usage,
     token_breakdown: r.token_breakdown || [],

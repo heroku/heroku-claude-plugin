@@ -3,7 +3,7 @@
 
 Validates the scenarios corpus and launches the scenario-eval workflow.
 Must be run from a Claude Code session started with --dangerously-skip-permissions
-since agents will write files, run Heroku CLI commands, and deploy real apps.
+since agents will write files and deploy real apps through the mcp-portal.
 
 Usage:
   python3 evals/scenarios/scenario_eval.py --list
@@ -72,15 +72,14 @@ def cmd_run(scenario_id: str | None) -> int:
     print()
     print("This launches the scenario-eval workflow which will:")
     print("  • Deploy real Heroku apps (one per scenario)")
-    print("  • Require an authenticated Heroku account")
-    print("  • Run teardown after each scenario")
+    print("  • Require the mcp-portal MCP server connected with a verified Heroku login")
+    print("  • Clean up after each scenario")
     print()
     print("Prerequisites:")
     print("  1. Run from a session started with:")
     print("       HEROKU_TOKEN_BUDGET_TRACKING=1 claude --plugin-dir /path/to/heroku-plugin \\")
     print("         --allowedTools \"Bash,Read,Write,Edit,Task\"")
-    print("  2. heroku whoami must succeed")
-    print("  3. moot-server should be running for session records")
+    print("  2. The mcp-portal connector must be added and authenticated (no Heroku CLI needed)")
     print()
     if scenario_id:
         print(f"Launching workflow for scenario: {scenario_id}")
