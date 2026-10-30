@@ -12,9 +12,9 @@ allowed-tools: Bash, Read
 
 # Build and Deploy
 
-<!-- TODO: Step 5 needs a live end-to-end test to confirm the claim portal URL is
-     surfaced correctly. Blocked on get_deployment_status returning "try again shortly"
-     on staging as of 2026-08-28. Track status in mcp/mcp-portal-readiness.md. -->
+<!-- TODO: The app_id flow in this skill and its children has not yet had a live end-to-end
+     run against the mcp-portal. Verify with the `discard-website` and `saas-*` scenarios
+     (evals/scenarios) and remove this note once they pass. -->
 
 You are running the complete Heroku build-and-deploy workflow. This orchestrates
 atomic skills in sequence. Each step is independently resumable via session state.
@@ -28,8 +28,9 @@ a partial session, ask:
 I found a previous session for '<app_name>'. Resume from where we left off?
 ```
 
-If resuming: skip completed steps based on session state fields present
-(`deployed: true` means deploy already happened).
+Read it with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/session.py show`. If resuming: skip
+completed steps based on the fields present (`deployed_at` means the deploy finished; an
+`app_id` without `deployed_at` means a preview app exists but the deploy did not finish).
 
 ## Step 2 — Run preflight
 
@@ -61,31 +62,31 @@ Invoke the deploy-anonymous skill using the `Skill` tool:
 Skill: heroku-plugin:deploy-anonymous
 ```
 
-This skill creates an anonymous session, creates the Heroku app via `create_preview_app`,
-sets secrets (CLI hybrid if needed) and kicks off addon provisioning, pushes code via git
-promptly (the git token is short-lived), then monitors the build and addon readiness
-concurrently via `get_deployment_status` / `get_addon_status`.
+This skill creates the preview app via `create_preview_app`, sets secrets with
+`set_config_vars` if the stack needs any, kicks off addon provisioning, pushes code via git
+promptly (the git token is short-lived), then monitors the build and addon readiness as the
+server's `monitoring` guidance directs.
+
+If it stops because a preview app is **already active**, or because preview apps are
+unavailable for this user, do not continue to Step 5. Relay what it reported. For an active
+app, offer `/heroku-plugin:discard-preview-app` and resume Step 4 once the user has chosen.
 
 ## Step 5 — Surface next steps
 
-After successful deployment, surface the claim portal URL from session state
-(`web_url` returned by `get_deployment_status`):
+`deploy-anonymous` has already shown the Preview and Claim links (or the Deployment card
+has). Do not repeat or rebuild them here. Close with the next steps:
 
 ```
-✓ Your app is live!
-
-  ─────────────────────────────────────────────────
-  Preview:   <web_url from get_deployment_status>
-  ─────────────────────────────────────────────────
-
-Visit the preview URL to claim ownership of this app before the window closes.
+✓ Your app is deployed.
 
 What would you like to do next?
 
   • Continue developing locally — your code is at <target_dir>
-  • Claim this app:  /heroku-plugin:claim-app
-  • Clean up:        /heroku-plugin:teardown
+  • Claim this app:        /heroku-plugin:claim-app
+  • Discard the preview:   /heroku-plugin:discard-preview-app
 ```
+
+The claim window is about 1 hour; unclaimed apps are removed when it closes.
 
 ## Recovery
 
