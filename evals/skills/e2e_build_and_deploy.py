@@ -87,7 +87,10 @@ def run_e2e(stack: str = "python", variant: str = "fastapi", keep: bool = False)
         cmd = [sys.executable, str(SCAFFOLD), "--name", "test-app", "--stack", stack]
         if variant:
             cmd += ["--variant", variant]
-        cmd += ["--addons", "postgres,redis", "--dir", str(target)]
+        # Static sites have no backend, so the scaffolder rejects addons for them.
+        if stack != "website":
+            cmd += ["--addons", "postgres,redis"]
+        cmd += ["--dir", str(target)]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
@@ -100,12 +103,19 @@ def run_e2e(stack: str = "python", variant: str = "fastapi", keep: bool = False)
 
         # Step 2: Verify Layer 2 files exist
         print("\n[2] Verifying Layer 2 contract...")
-        for fname in ["Procfile", "project.toml", ".heroku-plugin-scaffold.json", ".gitignore"]:
+        # The static-web-server buildpack supplies the web process, so website apps have no Procfile.
+        required = ["project.toml", ".heroku-plugin-scaffold.json", ".gitignore"]
+        if stack != "website":
+            required.insert(0, "Procfile")
+        for fname in required:
             fpath = target / fname
             if not fpath.exists():
                 print(f"  ✗ Missing: {fname}")
                 return 1
             print(f"  ✓ {fname}")
+        if stack == "website" and (target / "Procfile").exists():
+            print("  ✗ website apps must not have a Procfile")
+            return 1
 
         # Step 2b: Verify app.json is absent (replaced by .heroku-plugin-scaffold.json)
         if (target / "app.json").exists():
