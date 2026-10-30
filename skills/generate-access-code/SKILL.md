@@ -26,12 +26,16 @@ Access code generation is handled by the Heroku claim portal, not via MCP.
 To share your deployed app, share the claim portal URL from your deploy step.
 The `web_url` returned by `get_deployment_status` is the claim portal URL.
 
-From the claim portal, the recipient can accept the Terms of Service and
-take ownership of the app.
+Anyone who opens that link and signs in can take ownership of the app, so only send it to
+someone who should own it.
 ```
 
 ## Notes
 
 - The claim portal URL is the `web_url` from `get_deployment_status`
-- Access control is managed through the ToU/nonce binding on the portal side
-- The `app_uuid` is saved in `.heroku-plugin-session.json` after a successful deploy
+- Read it from the session (`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/session.py show` →
+  `session.claim_url`) or call `get_preview_app_details { app_id }` for the current link.
+  Copy it verbatim; do not rebuild it.
+- To let a person only *look* at the app, use `share_in_browser { app_id }` instead: it returns
+  a single-use `preview_link`.
+- The `app_id` is saved in `.heroku-plugin-session.json` after a successful deploy
