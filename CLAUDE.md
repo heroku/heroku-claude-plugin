@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Claude Code plugin that scaffolds and deploys applications to Heroku from natural language prompts. It follows the Track 1 steel thread: user describes an app → plugin scaffolds it → deploys to Heroku → app is live.
 
-The deploy path uses the mcp-portal MCP server (anonymous deploy flow). See `mcp/mcp-deploy-plan.md` for full integration details and `mcp/mcp-portal-readiness.md` for what server-side work remains before a live end-to-end test is possible.
+The deploy path uses the mcp-portal MCP server (authenticated preview-app flow). `mcp/mcp-core-contract.md` is the source of truth for the tool surface; `mcp/mcp-deploy-plan*.md` and `mcp/mcp-portal-readiness.md` are historical and describe the retired session-based flow.
 
 ## Using the Plugin
 
@@ -16,7 +16,7 @@ Launch Claude Code with the plugin loaded:
 claude --plugin-dir /path/to/heroku-plugin
 ```
 
-The `UserPromptSubmit` hook fires automatically on any build or deploy prompt — no setup step needed. Just describe what you want to build and the plugin takes it from there. Preflight failures (missing git, missing `HEROKAI_SECRET`, etc.) are surfaced inline before any skill runs.
+The `UserPromptSubmit` hook fires automatically on any build or deploy prompt — no setup step needed. Just describe what you want to build and the plugin takes it from there. Preflight failures (missing git, etc.) are surfaced inline before any skill runs. The mcp-portal connector is added to Claude Code manually and authenticates as the user's verified Heroku identity; the plugin ships no `.mcp.json`.
 
 ## Skill Dispatch (Required)
 
@@ -87,7 +87,7 @@ Docker is for **local dev only** — never pushed to Heroku. When Docker is avai
 - `docker-compose.yml` mirrors Heroku addon config vars exactly (`DATABASE_URL`, `REDIS_URL`)
 - Heroku deploy uses the mcp-portal git push path (not `heroku` remote — see `deploy-anonymous` skill)
 
-Docker is optional. Preflight prompts the user with an explanation before offering to install it. `git` is the only hard requirement. Heroku CLI is no longer required for the deploy path — app creation and git push are handled by the mcp-portal MCP server. The CLI is still used for secrets (`heroku config:set`) when `secret_env_vars` is non-empty in `.heroku-plugin-scaffold.json`.
+Docker is optional. Preflight prompts the user with an explanation before offering to install it. `git` is the only hard requirement. The Heroku CLI is not used anywhere in the plugin — app creation, git credentials, secrets (`set_config_vars`, when `secret_env_vars` is non-empty in `.heroku-plugin-scaffold.json`) and discard are all mcp-portal tools.
 
 ### Skills (Atomic + Orchestrator)
 
@@ -108,32 +108,29 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 
 ### MCP Deploy Path
 
-The deploy path calls the mcp-portal MCP server. The server URL and auth live in `.mcp.json` at the repo root, which Claude Code reads to connect. Auth uses `$HEROKAI_SECRET` (set in `~/.zshrc` — never committed), interpolated into the `.mcp.json` URL as `${HEROKAI_SECRET}`.
+The deploy path calls the mcp-portal MCP server through a connector the user adds manually (the plugin has no `.mcp.json`). There are no sessions: the server identifies the caller by their verified Heroku login, each user has **one active preview app**, and every call after creation takes `app_id` (not `app_uuid`). Full contract: `mcp/mcp-core-contract.md`.
 
-The 7 mcp-portal tools used by the (first-)deploy flow:
+Tools used by the deploy flow:
 
 | Tool | Purpose |
 |------|---------|
-| `create_anonymous_session` | Start a session, get `conversation_id` |
-| `create_preview_app` | Create app on Heroku with CNB stack; returns `app_uuid`, `git_url`, `git_credentials` |
-| `create_addon` | Provision an addon (postgres, redis); input: `{ app_uuid, service }` |
-| `get_addon_status` | Poll addon until `ready: true`; input: `{ app_uuid, addon_id }` |
-| `get_deployment_status` | Poll build status; returns claim portal `web_url` |
-| `share_in_browser` | Get a fresh single-use preview URL after build succeeds |
-| `check_claim_status` | Poll until app is claimed or expired |
+| `create_preview_app` | Create the preview app; input `{}`; returns `app_id`, `git_url`, `git_credentials` (~5-min token) |
+| `get_preview_app_git_credentials` | Mint fresh git credentials for an existing `app_id` (credential lapsed mid-deploy) |
+| `set_config_vars` | Set secrets (`{ app_id, vars }`); returns masked values; the user is prompted to confirm |
+| `create_addon` | Provision an addon (postgres, redis); input `{ app_id, service }` |
+| `get_addon_status` | Poll addon until `ready: true`; input `{ app_id, addon_id }` |
+| `get_deployment_status` | Build status; returns `claim_link`, claim-portal `web_url`, `expires_at` (epoch ms) |
+| `get_build_output` | Build log, read when `build.failed` is true |
+| `share_in_browser` | Fresh single-use preview link after the build succeeds |
+| `check_claim_status` | Poll until the app is claimed or expired |
+| `get_preview_app_details` | Claim URL and state for an existing app (used by `claim-app`) |
+| `discard_preview_app` | Mark an unclaimed preview app discarded (`discard-preview-app` skill) |
 
-> `get_build_output` was removed from the active flow — `get_deployment_status` carries the build log.
-> `check_anonymous_session_state` was removed server-side (2026-10-08 rebase) — ToS acceptance is no longer part of the deploy flow.
+Responses may carry a `monitoring` block (`owner: card | assistant`). Skills follow it instead of hardcoding poll intervals; see the contract.
 
-A 9th server tool, `get_preview_app_git_credentials`, mints fresh git push creds for an **already-provisioned** preview app — its purpose is the edit → redeploy loop (pushing a revision after the ~5-min `create_preview_app` creds have expired). It is **not** part of the first-deploy flow above and has no caller yet; it belongs to a future redeploy skill.
+The portal does not expose app deletion (`destroy_app` is filtered out of its allowlist), so there is no MCP path to delete a claimed app. `teardown` is paused until the portal team exposes it.
 
-**Current status:** The plugin talks to the **staging** server (`.mcp.json`), and staging provisions for real — the old "stubbed server-side / `git_url` returns `git.invalid`" note (from the canary era) no longer holds. Verified live on 2026-08-28:
-
-- `create_anonymous_session`, `create_preview_app` — confirmed end-to-end. `create_preview_app` returns a real `git_url` (`https://git.staging.herokudev.com/<app>.git`) and real RS256 JWT `git_credentials` (~5-min lifetime) + `mcp_credentials` (~1-hr lifetime). Response shape matches this table and the `deploy-anonymous` Step 4 doc.
-- `get_preview_app_git_credentials` — **not operational on staging**: returns "could not reach the deploy service … needs operator attention." Because it fails at the service layer, the `app_id` argument (assumed to be `app_uuid`) is **still unverified**. Under investigation with the mcp-portal team; do not rely on the Step 7 re-mint path until it's confirmed working.
-- `create_addon`, `get_addon_status`, `get_deployment_status`, `check_claim_status` — not yet exercised live end-to-end (require a real git push first). `check_claim_status` confirmed working on staging (2026-08-28). `get_build_output` removed from the active deploy flow.
-
-See `mcp/mcp-portal-readiness.md` for remaining server-side work items.
+**Status:** The tool contract above was verified from `mcp-portal` and `mcp-core` 7.0.0 source on 2026-10-30. The new flow has not yet been run live against staging; the `discard-website` and `saas-*` scenarios in `evals/scenarios/` are the manual live check.
 
 For local testing without the live server: set `HEROKU_MCP_STUB=1` — stubs in `mcp/stubs/` conform to the mcp-portal tool result spec.
 
@@ -188,7 +185,7 @@ Python module supports `variant` option: `fastapi` (default), `django`, `flask`.
 - Toolchain checks run **before** any writes
 - Rollback only removes `target_dir` if **this run** created it
 - Skills show diffs before applying edits
-- No `.env` or secrets committed; Heroku config vars set manually
+- No `.env` or secrets committed; Secrets are set through `set_config_vars`
 
 ### Supported Stacks + Addons (v1)
 
@@ -208,7 +205,7 @@ Addons post-claim: billable to user's account
 }
 ```
 
-The mcp-portal server URL and auth are defined in `.mcp.json` (repo root), not here. `HEROKAI_SECRET` must be set in the environment (`~/.zshrc`) — it is never committed to the repo; `.mcp.json` references it as `${HEROKAI_SECRET}`.
+The mcp-portal connection is configured in the user's Claude Code, not in this repo.
 
 ### Eval Strategy
 
