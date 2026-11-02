@@ -1,5 +1,10 @@
 # MCP Anonymous Deploy Integration Plan
 
+> **DEPRECATED — Historical record only**
+> This document describes the retired session-based flow (`create_anonymous_session`,
+> `conversation_id`, `app_uuid`, `.mcp.json` with `HEROKAI_SECRET`). For the current tool
+> surface see `mcp/mcp-core-contract.md`.
+
 **Status:** Active — staging provisions for real; build polling still down  
 **Active endpoint:** `https://mcp-portal.staging.herokudev.com/mcp?herokai=${HEROKAI_SECRET}` (per `.mcp.json`)  
 **Last validated:** 2026-08-28 (live staging probe) + 2026-10-08 (mcp-portal rebase)

@@ -1,5 +1,10 @@
 # mcp-portal Readiness — Plugin Integration Requirements
 
+> **DEPRECATED — Historical record only**
+> This document describes the retired session-based flow (`create_anonymous_session`,
+> `conversation_id`, `app_uuid`, `.mcp.json` with `HEROKAI_SECRET`). For the current tool
+> surface see `mcp/mcp-core-contract.md`.
+
 **Purpose:** Ordered list of MCP server features needed to complete the anonymous deploy
 integration in the plugin. Pass to the mcp-portal team; implement in order so each item
 can be tested independently as it lands on staging.
