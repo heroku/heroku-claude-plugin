@@ -1,5 +1,5 @@
-<!-- Source: https://devcenter.heroku.com/articles/heroku-postgresql — verified 2026-09-10 -->
-<!-- Source: https://devcenter.heroku.com/articles/heroku-redis — verified 2026-09-10 -->
+<!-- Source: https://devcenter.heroku.com/articles/heroku-postgresql — verified 2026-11-02 -->
+<!-- Source: https://devcenter.heroku.com/articles/heroku-redis — verified 2026-11-02 -->
 
 # Heroku Addons (Plugin Supported)
 
