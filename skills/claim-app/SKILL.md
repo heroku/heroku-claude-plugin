@@ -13,7 +13,7 @@ allowed-tools: Bash, Read
 The claim itself happens in the browser, on the claim portal, signed in as the user. This skill
 finds the claim link, gets the user there, and watches for the result.
 
-Tool contract: `${CLAUDE_PLUGIN_ROOT}/mcp/mcp-core-contract.md`.
+Tool contract: `${CLAUDE_PLUGIN_ROOT}/references/mcp-core-contract.md`.
 
 ## Step 1 — Load context
 

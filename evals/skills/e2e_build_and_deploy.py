@@ -38,7 +38,7 @@ def _read_stub(name: str) -> dict:
     return data["result"]["structuredContent"]
 
 
-# Required structuredContent keys per stub, from mcp/mcp-core-contract.md.
+# Required structuredContent keys per stub, from references/mcp-core-contract.md.
 STUB_REQUIRED_KEYS: dict[str, set[str]] = {
     "create_preview_app.json": {"app_id", "git_url", "git_credentials"},
     "get_preview_app_git_credentials.json": {"git_credentials"},
@@ -209,7 +209,7 @@ def run_e2e(stack: str = "python", variant: str = "fastapi", keep: bool = False)
         print(f"  ✓ discarded app_id: {discard_stub['app_id']}")
 
         # Contract: every stub carries its required keys and none of the removed identifiers
-        print("\n[contract] Validate stubs against mcp/mcp-core-contract.md...")
+        print("\n[contract] Validate stubs against references/mcp-core-contract.md...")
         errors = validate_stubs()
         if errors:
             for err in errors:

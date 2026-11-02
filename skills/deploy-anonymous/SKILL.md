@@ -10,7 +10,7 @@ allowed-tools: Bash, Read
 
 # Deploy to Heroku (Anonymous Preview)
 
-Tool contract: `${CLAUDE_PLUGIN_ROOT}/mcp/mcp-core-contract.md`. There is no session step — the
+Tool contract: `${CLAUDE_PLUGIN_ROOT}/references/mcp-core-contract.md`. There is no session step — the
 server identifies the user by their verified Heroku login — and every call takes `app_id`.
 
 ## Step 1 — Verify prerequisites

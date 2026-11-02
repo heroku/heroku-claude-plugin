@@ -1,6 +1,6 @@
 > **DEPRECATED — Historical record only**
 > This document describes the original canary-era integration plan (8 tools, ToS flow). It is
-> preserved for context. For the current deploy flow see `mcp/mcp-core-contract.md`.
+> preserved for context. For the current deploy flow see `references/mcp-core-contract.md`.
 >
 > Key changes since this document was written:
 > - ToS flow removed (`check_anonymous_session_state` deleted server-side, 2026-10-08)

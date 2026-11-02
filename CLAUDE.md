@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Claude Code plugin that scaffolds and deploys applications to Heroku from natural language prompts. It follows the Track 1 steel thread: user describes an app → plugin scaffolds it → deploys to Heroku → app is live.
 
-The deploy path uses the mcp-portal MCP server (authenticated preview-app flow). `mcp/mcp-core-contract.md` is the source of truth for the tool surface; `mcp/mcp-deploy-plan*.md` and `mcp/mcp-portal-readiness.md` are historical and describe the retired session-based flow.
+The deploy path uses the mcp-portal MCP server (authenticated preview-app flow). `references/mcp-core-contract.md` is the source of truth for the tool surface; `mcp/mcp-deploy-plan*.md` and `mcp/mcp-portal-readiness.md` are historical and describe the retired session-based flow.
 
 ## Using the Plugin
 
@@ -108,7 +108,7 @@ All skills live in `skills/*/SKILL.md`. Atomic skills are independently triggera
 
 ### MCP Deploy Path
 
-The deploy path calls the mcp-portal MCP server through a connector the user adds manually (the plugin has no `.mcp.json`). There are no sessions: the server identifies the caller by their verified Heroku login, each user has **one active preview app**, and every call after creation takes `app_id` (not `app_uuid`). Full contract: `mcp/mcp-core-contract.md`.
+The deploy path calls the mcp-portal MCP server through a connector the user adds manually (the plugin has no `.mcp.json`). There are no sessions: the server identifies the caller by their verified Heroku login, each user has **one active preview app**, and every call after creation takes `app_id` (not `app_uuid`). Full contract: `references/mcp-core-contract.md`.
 
 Tools used by the deploy flow:
 

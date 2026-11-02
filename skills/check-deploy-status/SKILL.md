@@ -10,7 +10,7 @@ allowed-tools: Bash, Read
 
 # Check Deploy Status
 
-Tool contract: `${CLAUDE_PLUGIN_ROOT}/mcp/mcp-core-contract.md`.
+Tool contract: `${CLAUDE_PLUGIN_ROOT}/references/mcp-core-contract.md`.
 
 ## Step 1 — Load context
 
