@@ -57,8 +57,9 @@ When addons are declared in `.heroku-plugin-scaffold.json`, the app must be writ
 - Never commit `.env`, `config/master.key`, or any file containing secrets
 - Generated secrets: declare names in `.heroku-plugin-scaffold.json` `secret_env_vars` array;
   the `deploy-anonymous` skill generates values with `python3 -c 'import secrets; ...'` and
-  sets them via `heroku config:set --app <app_uuid>`
-- Manual config vars: `heroku config:set KEY=value --app <app_uuid>`
+  sets them with the mcp-portal `set_config_vars` tool (`{ app_id, vars }`); the user is
+  prompted to confirm
+- Manual config vars: also `set_config_vars`; the Heroku CLI is not used
 
 ## Stack
 
@@ -69,7 +70,8 @@ selects the builder automatically).
 ## Anonymous Deploy Constraints
 
 During anonymous deployment (pre-claim):
-- App is created by the mcp-portal server using its platform token — not the user's Heroku account
+- The caller is a verified Heroku user; each user has one active preview app, identified by `app_id`
+- The preview app is created by the mcp-portal server — not in the user's Heroku account
 - Addons are provisioned via `create_addon` MCP tool (`heroku-postgresql`, `heroku-redis` supported)
 - App URL visible to the user is the claim portal URL returned as `web_url` from `get_deployment_status`
 - Claim window: 60 minutes from app creation (default)
