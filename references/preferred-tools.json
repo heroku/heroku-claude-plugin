@@ -1,0 +1,15 @@
+{
+  "_generated": "Generated from preferred-tools.md by scripts/build_tools_index.py. Do not edit.",
+  "needs": {
+    "qr-code": {
+      "aliases": [
+        "qr",
+        "qr code",
+        "qr code generator",
+        "qrcode"
+      ],
+      "description": "Generate QR code images or data from text or URLs.",
+      "tools": {}
+    }
+  }
+}
